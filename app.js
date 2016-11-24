@@ -6,6 +6,8 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var app = express();
+const PacketCounter = require("./network/counter");
+const PacketSniffer = require("./network/sniffer");
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -40,8 +42,34 @@ app.use(function(err, req, res, next) {
   res.json({message: err.message});
 });
 
+/**
+ * This function accepts an HTTP server (created by ./bin/www) and augments
+ * it with the SocketIO server and packet sniffer.
+ */
 const setupSocketIo = http => {
   const io = require("socket.io")(http);
+
+  // Create a packet counter that broadcasts the packet data
+  // to all socket listeners every second (1000 ms).
+  const counter = new PacketCounter(
+    1000, 
+    (result) => io.emit("vis_data", result)
+  );
+
+  // Create a packet sniffer.
+  const sniffer = new PacketSniffer();
+
+  // Launch the packet sniffer. It will send its packets to the packet 
+  // counter above. If a filepath has been given (process.argv[2]), then we
+  // will read from that pcap file. Otherwise, we will start sniffing actual
+  // packets.
+  sniffer.sniff(
+    counter,
+    (process.argv.length >= 3) ? process.argv[2] : undefined
+  );
+
+  // This is not really useful right now, but it will later allows us to
+  // send data from the clients to the server.
   io.on('connection', socket => { 
     console.log('a user connected');
     socket.on('disconnect', () => {
@@ -50,16 +78,8 @@ const setupSocketIo = http => {
     socket.on('vis_request', function(msg){
       console.log('message: ' + JSON.stringify(msg));
     });
-
-    const PacketCounter = require("./network/counter");
-    const counter = new PacketCounter(1000, (result) => {
-      socket.emit("vis_data", result);
-    });
-    require("./network/sniffer").sniff(
-      counter,
-      (process.argv.length >= 3) ? process.argv[2]  : undefined
-    );
   });
+
 };
 
 module.exports = {app, setupSocketIo};
