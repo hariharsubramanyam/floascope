@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css">
+
+
+	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+  <script src="../js/websocket_helper.js"></script>
+
+  <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.6.0/rickshaw.min.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+  <script src="http://fenixrepo.fao.org/cdn/faostat3/js/d3/d3.layout/1.0/d3.layout.js"></script> <!--sketchy cdn?-->  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.6.0/rickshaw.min.js"></script>
+  <!--<script src="../js/timeseries.js"></script>-->
+
+<style>
+  #chart_container {
+          position: relative;
+          font-family: Arial, Helvetica, sans-serif;
+  }
+  #chart {
+          position: relative;
+          left: 40px;
+  }
+  #y_axis {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          width: 40px;
+  }
+
+  #xlegend {
+          text-align: left;  
+  }
+
+  #legend {
+          text-align: center;  
+  }
+
+  #offset_form {
+          float: left;
+          margin: 2em 0 0 15px;
+          font-size: 13px;
+  }
+
+
+    .swatch {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin: 0 8px 0 0;
+    }
+    .label {
+      display: inline-block;
+    }
+    .line {
+      display: inline-block;
+      margin: 0 0 0 30px;
+    }  
+</style>
+
+
+</head>
+<body>
+  <div id="chart_container">
+    <div>
+      <div id="y_axis"></div>
+      <div id="chart" style="width:1200px; height:400px;"></div>
+      <form id="offset_form" class="toggler">
+              <input checked type="radio" name="offset" id="lines" value="lines">
+              <label class="lines" for="lines">lines</label>
+              <br>
+              <input type="radio" name="offset" id="stack" value="zero">
+              <label class="stack" for="stack">stack</label>
+      </form>
+    </div>
+    <div id="x-legend"></div><div id="legend"></div>
+  </div>
+
+  <script> 
+    var tv = 250; // ms
+    // instantiate
+    var graph = new Rickshaw.Graph( {
+      element: document.getElementById("chart"),
+      renderer: 'line',
+      series: new Rickshaw.Series.FixedDuration([{ name: 'zero' }], undefined, {
+        timeInterval: tv,
+        maxDataPoints: 100,
+        timeBase: new Date().getTime()/1000 // s
+      }) 
+    } );
+
+    // axes
+    var axes = new Rickshaw.Graph.Axis.Time( { graph: graph } );
+    var y_axis = new Rickshaw.Graph.Axis.Y( {
+            graph: graph,
+            orientation: 'left',
+            tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+            element: document.getElementById('y_axis'),
+    } );
+
+    // line/stack graph type toggle
+    var offsetForm = document.getElementById('offset_form');
+    offsetForm.addEventListener('change', function(e) {
+            var offsetMode = e.target.value;
+
+            if (offsetMode == 'lines') {
+                    graph.setRenderer('line');
+                    graph.offset = 'zero';
+            } else {
+                    graph.setRenderer('stack');
+                    graph.offset = offsetMode;
+            }       
+            graph.render();
+
+    }, false);
+
+    // render for first time
+    graph.render();
+
+    // hovering legend
+    var xlegend = document.querySelector('#x-legend');
+    var legend = document.querySelector('#legend');
+    var Hover = Rickshaw.Class.create(Rickshaw.Graph.HoverDetail, {
+      render: function(args) {
+        legend.innerHTML = "";
+        xlegend.innerHTML = args.formattedXValue;
+        args.detail.sort(function(a, b) { 
+          return a.order - b.order }
+          ).forEach( function(d) {
+            if (d.series.name != 'zero' && d.formattedYValue > 0) {
+              var line = document.createElement('div');
+              line.className = 'line';
+
+              var swatch = document.createElement('div');
+              swatch.className = 'swatch';
+              swatch.style.backgroundColor = d.series.color;
+
+              var label = document.createElement('div');
+              label.className = 'label';
+              label.innerHTML = d.name + ": " + d.formattedYValue + " bytes/s";
+              line.appendChild(swatch);
+              line.appendChild(label);
+              legend.appendChild(line);
+
+              var dot = document.createElement('div');
+              dot.className = 'dot';
+              dot.style.top = graph.y(d.value.y0 + d.value.y) + 'px';
+              dot.style.borderColor = d.series.color;
+              this.element.appendChild(dot);
+              dot.className = 'dot active';
+
+              this.show();
+
+            }
+
+        }, this );
+            }
+    });
+
+    var hover = new Hover( { graph: graph } ); 
+
+  
+    // update graph
+    var graph_data = {};
+    var iv = setInterval( function() {
+      for (i in Object.keys(graph_data)) {
+        var timestamp_s = Object.keys(graph_data)[i];
+        graph.series.addData(graph_data[timestamp_s], timestamp_s); // second granularity, for smoothness
+      }
+      if (Object.keys(graph_data).length > 0) graph.render();
+      graph_data = {};
+    }, tv );
+
+    var ws = WebsocketHelper([function(data) {
+      for (var i in Object.keys(data)) {
+        var source_ip = Object.keys(data)[i];
+        var obj = data[source_ip];
+        console.log(obj["interval"]);
+        var timestamp_s = obj["time_stamp"]/1000;
+        var throughput = obj["num_packets"]/obj["interval"]*1000; // throughput in #bytes/ms
+        if (!(timestamp_s in graph_data)) graph_data[timestamp_s] = {};
+        if (!(source_ip in graph_data[timestamp_s])) graph_data[timestamp_s][source_ip] = 0;
+        console.log(timestamp_s + " - " + source_ip + " - " + throughput);
+        graph_data[timestamp_s][source_ip] = graph_data[timestamp_s][source_ip] + throughput;
+
+      }
+    }], [function() {
+      console.log('Client has connected to the server!');
+      ws.sendMessage({"message": "Hi there"});
+    }], [function() {
+      console.log('The client has disconnected!');
+    }]);
+
+  </script>
+</body>
+</html>

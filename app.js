@@ -52,7 +52,9 @@ const setupSocketIo = http => {
     });
 
     const PacketCounter = require("./network/counter");
-    const counter = new PacketCounter(1000);
+    const counter = new PacketCounter(1000, (result) => {
+      socket.emit("vis_data", result);
+    });
     require("./network/sniffer").sniff(counter);
   });
 };

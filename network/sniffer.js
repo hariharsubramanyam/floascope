@@ -15,10 +15,10 @@ class PacketSniffer {
     if (this.pcap_session !== null) {
       return;
     } else {
-      const pcap_session = pcap.createSession("en0", "ip proto \\tcp");
+      const pcap_session = pcap.createSession("", "ip proto \\tcp");
 
       this.tcp_tracker.on("session", session => {
-        counter.addSession(session);
+        counter.updateSession(session);
         console.log("Start of session between: " + session.src_name + " and " + 
           session.dst_name);
 

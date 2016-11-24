@@ -2,7 +2,9 @@
 "use strict";
 
 class PacketCounter {
-  constructor(interval) {
+  constructor(interval, onTick) {
+    this.onTick = onTick;
+    this.interval = interval;
     this.sessionMap = new Map();
 
     const that = this;
@@ -13,11 +15,11 @@ class PacketCounter {
   }
 
   tick() {
-    for (var entry of this.sessionMap.entries()) {
-      const key = entry[0];
-      const value = entry[1];
-      console.log(key + " = " + value.recv_bytes_payload);
+    const result = {};
+    for (var value of this.sessionMap.values()) {
+      result[value.src] = value;
     }
+    this.onTick(result);
   }
 
   key(session) {
@@ -25,15 +27,18 @@ class PacketCounter {
   }
 
   updateSession(session) {
-    const data = this.sessionMap.get(this.key(session));
-    data.recv_bytes_payload = session.recv_bytes_payload;
-    this.sessionMap.set(this.key(session), data);
+    this.sessionMap.set(this.key(session), this.extractData(session));
   }
 
-  addSession(session) {
-    this.sessionMap.set(this.key(session), {
-      "recv_bytes_payload": 0
-    });
+  extractData(session) {
+    const now = new Date();
+    return {
+      "src": session.src_name,
+      "dst": session.dst_name,
+      "time_stamp": now.getTime(),
+      "num_packets": session.recv_bytes_payload,
+      "interval": this.interval
+    };
   }
 
   removeSession(session) {

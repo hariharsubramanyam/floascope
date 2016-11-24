@@ -43,7 +43,6 @@
     });
 
     socket.on("vis_data", function(data) {
-      console.log(data);
       notify(messageHandlers, data);
     });
 
