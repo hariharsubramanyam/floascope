@@ -11,11 +11,13 @@ class PacketSniffer {
     this.onPacket = onPacket;
   }
 
-  sniff(counter) {
+  sniff(counter, path) {
     if (this.pcap_session !== null) {
       return;
     } else {
-      const pcap_session = pcap.createSession("", "ip proto \\tcp");
+      const pcap_session = (path) ? 
+        pcap.createOfflineSession(path, "") : 
+        pcap.createSession("", "ip proto \\tcp");
 
       this.tcp_tracker.on("session", session => {
         counter.updateSession(session);

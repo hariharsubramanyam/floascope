@@ -55,7 +55,10 @@ const setupSocketIo = http => {
     const counter = new PacketCounter(1000, (result) => {
       socket.emit("vis_data", result);
     });
-    require("./network/sniffer").sniff(counter);
+    require("./network/sniffer").sniff(
+      counter,
+      (process.argv.length >= 3) ? process.argv[2]  : undefined
+    );
   });
 };
 
