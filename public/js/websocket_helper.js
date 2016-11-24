@@ -42,7 +42,8 @@
       notify(connectHandlers);
     });
 
-    socket.on("custom_message", function(data) {
+    socket.on("vis_data", function(data) {
+      console.log(data);
       notify(messageHandlers, data);
     });
 
@@ -57,7 +58,7 @@
      * @param {Object} message - The JSON data to send to the server.
      */
     that.sendMessage = function(message) {
-      socket.emit("message", message);
+      socket.emit("vis_request", message);
     };
 
     Object.freeze(that);

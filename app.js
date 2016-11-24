@@ -7,8 +7,6 @@ var bodyParser = require('body-parser');
 
 var app = express();
 
-require("./network/sniffer").sniff();
-
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
@@ -45,7 +43,14 @@ app.use(function(err, req, res, next) {
 const setupSocketIo = http => {
   const io = require("socket.io")(http);
   io.on('connection', socket => { 
-      console.log('a user connected');
+    console.log('a user connected');
+    socket.on('disconnect', () => {
+      console.log('user disconnected');
+    });
+    socket.on('vis_request', function(msg){
+      console.log('message: ' + JSON.stringify(msg));
+    });
+    require("./network/sniffer").sniff();
   });
 };
 

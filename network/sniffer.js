@@ -5,11 +5,10 @@
 const pcap = require("pcap");
 
 class PacketSniffer {
-  constructor(listeners) {
-    listeners = listeners || [];
+  constructor(onPacket) {
     this.tcp_tracker = new pcap.TCPTracker();
     this.pcap_session = null;
-    this.listeners = listeners.map(l => l);
+    this.onPacket = onPacket;
   }
 
   sniff() {
