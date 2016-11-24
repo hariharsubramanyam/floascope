@@ -11,16 +11,23 @@ class PacketSniffer {
     this.onPacket = onPacket;
   }
 
-  sniff() {
+  sniff(counter) {
     if (this.pcap_session !== null) {
       return;
     } else {
       const pcap_session = pcap.createSession("en0", "ip proto \\tcp");
 
       this.tcp_tracker.on("session", session => {
+        counter.addSession(session);
         console.log("Start of session between: " + session.src_name + " and " + 
           session.dst_name);
+
+        session.on("data recv", session => {
+          counter.updateSession(session);
+        });
+
         session.on("end", session => {
+          counter.removeSession(session);
           console.log("End of session between: " + session.src_name + " and " +
             session.dst_name);
         });
@@ -28,8 +35,12 @@ class PacketSniffer {
 
       const tracker = this.tcp_tracker;
       pcap_session.on("packet", raw_packet => {
-        var packet = pcap.decode.packet(raw_packet);
-        tracker.track_packet(packet);
+        try {
+          var packet = pcap.decode.packet(raw_packet);
+          tracker.track_packet(packet);
+        } catch(err) {
+          console.log(err);
+        }
       });
     }
   }

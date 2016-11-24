@@ -50,7 +50,10 @@ const setupSocketIo = http => {
     socket.on('vis_request', function(msg){
       console.log('message: ' + JSON.stringify(msg));
     });
-    require("./network/sniffer").sniff();
+
+    const PacketCounter = require("./network/counter");
+    const counter = new PacketCounter(1000);
+    require("./network/sniffer").sniff(counter);
   });
 };
 
