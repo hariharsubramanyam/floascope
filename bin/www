@@ -4,7 +4,8 @@
  * Module dependencies.
  */
 
-var app = require('../app');
+var appImported = require("../app");
+var app = appImported.app;
 var debug = require('debug')('floascope:server');
 var http = require('http');
 
@@ -20,6 +21,11 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+appImported.setupSocketIo(server);
+
+/**
+ *
+ */
 
 /**
  * Listen on provided port, on all network interfaces.
