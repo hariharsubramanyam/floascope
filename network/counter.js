@@ -27,6 +27,13 @@ class PacketCounter {
   }
 
   /**
+   * Simply returns the interval time, in milliseconds.
+   */
+  interval() {
+    return this.interval;
+  }
+
+  /**
    * Executed every interval milliseconds.
    */
   tick() {
