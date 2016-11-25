@@ -41,7 +41,7 @@ class PacketCounter {
     // function with the result.
     const result = {};
     for (var value of this.sessionMap.values()) {
-      if (value.num_packets > 0) {
+      if (value.num_bytes > 0) {
         result[value.src] = value;
       }
     }
@@ -73,7 +73,7 @@ class PacketCounter {
       "src": session.src_name,
       "dst": session.dst_name,
       "time_stamp": now.getTime(),
-      "num_packets": session.recv_bytes_payload,
+      "num_bytes": session.recv_bytes_payload,
       "interval": this.interval
     };
   }

@@ -181,7 +181,7 @@
         var obj = data[source_ip];
         console.log(obj["interval"]);
         var timestamp_s = obj["time_stamp"]/1000;
-        var throughput = obj["num_packets"]/obj["interval"]*1000; // throughput in #bytes/ms
+        var throughput = obj["num_bytes"]/obj["interval"]*1000; // throughput in #bytes/ms
         if (!(timestamp_s in graph_data)) graph_data[timestamp_s] = {};
         if (!(source_ip in graph_data[timestamp_s])) graph_data[timestamp_s][source_ip] = 0;
         console.log(timestamp_s + " - " + source_ip + " - " + throughput);

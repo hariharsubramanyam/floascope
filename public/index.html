@@ -19,7 +19,7 @@
       var ws = WebsocketHelper([function(data) {
         var rows = Object.keys(data).map(function(key) {
           var obj = data[key];
-          return [key, "" + obj.dst, obj.num_packets];
+          return [key, "" + obj.dst, obj.num_bytes];
         });
         sankey.resetData(rows);
       }], [function() {
