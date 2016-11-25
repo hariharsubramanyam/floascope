@@ -22,10 +22,12 @@ class PacketSniffer {
    * Start sniffing for packets.
    * @param {PacketCounter} counter - This will receive information from the
    *  Sniffer.
+   * @param {Number} ffwd - The fast-forward ratio. If this is set to 2.0, for
+   *  example, then the playback speed will be 2x (i.e. delays will be 0.5x).
    * @param {String} path - The path to the .pcap file. If empty, the sniffer
    *  will sniff actual packets.
    */
-  sniff(counter, path) {
+  sniff(counter, ffwd, path) {
     // Set up the session.
     const pcap_session = (path) ? 
       pcap.createOfflineSession(path, "") : 
@@ -53,12 +55,11 @@ class PacketSniffer {
 
     // Every time we read a packet, decode it and feed it to the TCP tracker.
     const tracker = this.tcp_tracker;
-    var n = 0;
     const delayer = new PacketDelayer(
       path ? false : true,
+      ffwd,
       packet => {
         try {
-          console.log(++n);
           tracker.track_packet(packet);
         } catch(err) {
           console.log(err);

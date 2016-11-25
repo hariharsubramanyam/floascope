@@ -1,5 +1,16 @@
 #!/usr/bin/env node
 
+/**
+ * Execute this as follows:
+ *
+ * node app.js --pcap <path_to_pcap_file> --ffwd <fast_forward_ratio>
+ *
+ * --pcap [optional]: The path to the .pcap file that will be used for playback.
+ * --ffwd [optional]: The fast-forward ratio. For example, if you set this to be
+ *  2.0, then the playback will happen at 2x speed. This field only makes sense
+ *  if you also set --pcap.
+ */
+
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -70,12 +81,13 @@ const setupSocketIo = http => {
   const sniffer = new PacketSniffer();
 
   // Launch the packet sniffer. It will send its packets to the packet 
-  // counter above. If a filepath has been given (argv.path), then we
+  // counter above. If a filepath has been given (argv.pcap), then we
   // will read from that pcap file. Otherwise, we will start sniffing actual
   // packets.
   sniffer.sniff(
     counter,
-    argv.path
+    argv.ffwd || 1.0,
+    argv.pcap
   );
 
   // This is not really useful right now, but it will later allows us to

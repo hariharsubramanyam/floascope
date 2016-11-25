@@ -12,11 +12,14 @@ class PacketDelayer {
    * @param {Boolean} flushImmediately - Whether to flush the packets right
    *  away as soon as we get them. We set this to true for live packet sniffing
    *  and false for replaying .pcap files.
+   * @param {Number} ffwd - The fast-forward ratio. If this is set to 2.0, for
+   *  example, then the playback speed will be 2x (i.e. delays will be 0.5x).
    * @param {Function} onPacket - The function execute whenever a packet will
    *  be flushed. It should take a single argument (the decoded packet).
    */
-  constructor(flushImmediately, onPacket) {
+  constructor(flushImmediately, ffwd, onPacket) {
     this.flushImmediately = flushImmediately;
+    this.ffwd = ffwd;
     this.onPacket = onPacket;
 
     // This will buffer packets that need to be flushed.
@@ -70,7 +73,7 @@ class PacketDelayer {
       const realTimeDiff = now - this.timestampOfLastFlush;
 
       // This is the number milliseconds to wait until flushing the next packet.
-      const timeToWait = pktTimeDiff - realTimeDiff;
+      const timeToWait = (pktTimeDiff - realTimeDiff) / this.ffwd;
 
       if (timeToWait <= 0) {
         // If it is already time to flush the packet, flush it, remove it
