@@ -41,7 +41,9 @@ class PacketCounter {
     // function with the result.
     const result = {};
     for (var value of this.sessionMap.values()) {
-      result[value.src] = value;
+      if (value.num_packets > 0) {
+        result[value.src] = value;
+      }
     }
     this.onTick(result);
   }
