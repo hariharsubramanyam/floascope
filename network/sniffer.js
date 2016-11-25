@@ -4,6 +4,8 @@
 // This is the packet sniffing library.
 const pcap = require("pcap");
 
+const PacketDelayer = require("./delayer");
+
 /**
  * This is the packet sniffer. It can either sniff actual packets or sniff
  * packets from a .pcap file.
@@ -51,14 +53,19 @@ class PacketSniffer {
 
     // Every time we read a packet, decode it and feed it to the TCP tracker.
     const tracker = this.tcp_tracker;
-    pcap_session.on("packet", raw_packet => {
-      try {
-        var packet = pcap.decode.packet(raw_packet);
-        tracker.track_packet(packet);
-      } catch(err) {
-        console.log(err);
+    var n = 0;
+    const delayer = new PacketDelayer(
+      path ? false : true,
+      packet => {
+        try {
+          console.log(++n);
+          tracker.track_packet(packet);
+        } catch(err) {
+          console.log(err);
+        }
       }
-    });
+    );
+    pcap_session.on("packet", raw_packet => delayer.add(raw_packet));
   }
 }
 
