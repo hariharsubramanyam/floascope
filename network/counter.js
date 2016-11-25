@@ -41,6 +41,7 @@ class PacketCounter {
     // function with the result.
     const result = {};
     for (var value of this.sessionMap.values()) {
+      value.time_stamp = (new Date()).getTime();
       if (value.num_bytes > 0) {
         result[value.src] = value;
       }
@@ -68,11 +69,9 @@ class PacketCounter {
    * Extract the data we care about from a given session.
    */
   extractData(session) {
-    const now = new Date();
     return {
       "src": session.src_name,
       "dst": session.dst_name,
-      "time_stamp": now.getTime(),
       "num_bytes": session.recv_bytes_payload,
       "interval": this.interval
     };
