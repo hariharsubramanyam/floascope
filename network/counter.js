@@ -23,7 +23,7 @@ class PacketCounter {
 
     // Execute the tick function every interval.
     const that = this;
-    setInterval(() => that.tick, interval);
+    setInterval(() => that.tick(), interval);
   }
 
   /**
