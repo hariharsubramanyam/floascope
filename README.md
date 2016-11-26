@@ -1,4 +1,12 @@
-First, install all dependencies in `package.json`
+You'll need `libpcap`. On Ubuntu, you can do this with: 
+
+```
+sudo apt-get install libpcap-dev
+```
+
+Also, make sure you install [Node.js](https://nodejs.org/en/) (this should also install NPM).
+
+Install all dependencies in `package.json`
 
 ```
 npm install
