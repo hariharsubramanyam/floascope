@@ -46,7 +46,10 @@ class PacketCounter {
         result[value.src] = value;
       }
     }
+
     this.onTick(result);
+
+    for (var value of this.sessionMap.values()) value.num_bytes = 0;
   }
 
   /**
