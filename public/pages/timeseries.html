@@ -4,12 +4,17 @@
   <meta charset="UTF-8">
   <title></title>
   <link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.runtime.min.js"></script>
+  <script src="/js/templates.js"></script>
 
 
 	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
   <script src="../js/websocket_helper.js"></script>
 
   <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.6.0/rickshaw.min.css">
+  <script src="/js/prefix_filter.js"></script>
+  <script src="/js/ui/prefix_ui.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
   <script src="http://fenixrepo.fao.org/cdn/faostat3/js/d3/d3.layout/1.0/d3.layout.js"></script> <!--sketchy cdn?-->  
@@ -60,6 +65,9 @@
       display: inline-block;
       margin: 0 0 0 30px;
     }  
+  #prefix_ui {
+    margin-top: 90px;
+  }
 </style>
 
 
@@ -79,8 +87,11 @@
     </div>
     <div id="x-legend"></div><div id="legend"></div>
   </div>
+  <div id="prefix_ui"></div>
 
   <script> 
+    var prefixUI = PrefixUI("prefix_ui");
+
     var tv = 250; // ms
     // instantiate
     var graph = new Rickshaw.Graph( {
@@ -178,6 +189,9 @@
     var ws = WebsocketHelper([function(data) {
       for (var i in Object.keys(data)) {
         var source_ip = Object.keys(data)[i];
+        if (!prefixUI.filter().passesFilter(source_ip)) {
+          continue;
+        }
         var obj = data[source_ip];
         console.log(obj["interval"]);
         var timestamp_s = obj["time_stamp"]/1000;

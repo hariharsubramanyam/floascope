@@ -6,6 +6,19 @@ sudo apt-get install libpcap-dev
 
 Also, make sure you install [Node.js](https://nodejs.org/en/) (this should also install NPM).
 
+You'll need the [Handlebars](http://handlebarsjs.com/) command line tool. You
+do that with:
+
+```
+sudo npm install -g handlebars
+```
+  
+Now, you can compile the Handlebars templates with:
+
+```
+handlebars templates/* -f public/js/templates.js
+```
+
 Install all dependencies in `package.json`
 
 ```

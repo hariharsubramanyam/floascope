@@ -3,25 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <title></title>
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.runtime.min.js"></script>
+  <script src="/js/templates.js"></script>
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
   <link rel="stylesheet" href="/css/style.css">
   <script src="/socket.io/socket.io.js"></script>
-  <script src="https://www.gstatic.com/charts/loader.js"></script>
   <script src="/js/websocket_helper.js"></script>
   <script src="/js/sankey.js"></script>
+  <script src="/js/prefix_filter.js"></script>
+  <script src="/js/ui/prefix_ui.js"></script>
 </head>
 <body>
   <div id="sankey_basic" style="width: 900px; height: 900px;"></div>
   <p>Sankey Diagram Demo</p>
+  <div id="prefix_ui"></div>
   <script> 
     var data = [];
+    var prefixUI = PrefixUI("prefix_ui");
 
     // Draw the Sankey diagram.
     Sankey("sankey_basic", data, {}, function(sankey) {
       var ws = WebsocketHelper([function(data) {
-        var rows = Object.keys(data).map(function(key) {
-          var obj = data[key];
-          return [key, "" + obj.dst, obj.num_bytes];
-        });
+        var rows = Object.keys(data)
+          .filter(function(key) {
+            return prefixUI.filter().passesFilter(key);
+          })
+          .map(function(key) {
+            var obj = data[key];
+            return [key, "" + obj.dst, obj.num_bytes];
+          });
         sankey.resetData(rows);
       }], [function() {
         console.log('Client has connected to the server!');
