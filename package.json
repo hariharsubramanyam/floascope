@@ -2,6 +2,9 @@
   "name": "floascope",
   "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "start": "handlebars templates/* -f public/js/templates.js && sudo node app.js"
+  },
   "dependencies": {
     "body-parser": "~1.15.1",
     "cookie-parser": "~1.4.3",
