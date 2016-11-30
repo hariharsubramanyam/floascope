@@ -27,7 +27,9 @@
       var ws = WebsocketHelper([function(data) {
         var rows = Object.keys(data)
           .filter(function(key) {
-            return prefixUI.filter().passesFilter(key);
+            var obj = data[key];
+            return prefixUI.filter().matchesFilter(key) 
+              || prefixUI.filter().matchesFilter(obj.dst);
           })
           .map(function(key) {
             var obj = data[key];

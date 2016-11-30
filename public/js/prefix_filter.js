@@ -21,10 +21,13 @@
       }
     };
 
-    that.passesFilter = function(ip) {
+    that.matchesFilter = function(ip) {
+      if (prefixes.length === 0) {
+        return true;
+      }
       return prefixes.filter(function(prefix) {
         return ip.startsWith(prefix);
-      }).length === 0;
+      }).length > 0;
     };
 
     that.prefixes = function() {

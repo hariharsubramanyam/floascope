@@ -189,7 +189,7 @@
     var ws = WebsocketHelper([function(data) {
       for (var i in Object.keys(data)) {
         var source_ip = Object.keys(data)[i];
-        if (!prefixUI.filter().passesFilter(source_ip)) {
+        if (!prefixUI.filter().matchesFilter(source_ip)) {
           continue;
         }
         var obj = data[source_ip];
