@@ -33,7 +33,9 @@
           })
           .map(function(key) {
             var obj = data[key];
-            return [key, "" + obj.dst, obj.num_bytes];
+            var realSrc = obj.src_host || key;
+            var realDst = obj.dst_host || obj.dst;
+            return [realSrc, "" + realDst, obj.num_bytes];
           });
         sankey.resetData(rows);
       }], [function() {

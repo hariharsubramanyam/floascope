@@ -3,12 +3,15 @@
 /**
  * Execute this as follows:
  *
- * node app.js --pcap <path_to_pcap_file> --ffwd <fast_forward_ratio>
+ * node app.js --pcap <path_to_pcap_file> --ffwd <fast_forward_ratio> --rnds 
  *
  * --pcap [optional]: The path to the .pcap file that will be used for playback.
  * --ffwd [optional]: The fast-forward ratio. For example, if you set this to be
  *  2.0, then the playback will happen at 2x speed. This field only makes sense
  *  if you also set --pcap.
+ * --rnds [optiona]: Whether the server should perform reverse DNS lookups. If
+ *  you type --rdns, then reverse DNS lookups will be performed. If you don't
+ *  type --rnds, then reverse DNS lookups will NOT be performed.
  */
 
 var express = require('express');
@@ -74,6 +77,7 @@ const setupSocketIo = http => {
   // to all socket listeners every second (1000 ms).
   const counter = new PacketCounter(
     1000, 
+    argv.rdns,
     (result) => io.emit("vis_data", result)
   );
 
