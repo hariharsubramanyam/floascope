@@ -45,6 +45,11 @@ class PacketSniffer {
         counter.updateSession(session);
       });
 
+      session.on("retransmit", session => {
+        // On retransmit, update the number of retransmissions.
+        counter.retransmit(session);
+      });
+
       session.on("end", session => {
         // Purge the session when it closes.
         counter.removeSession(session);

@@ -3,6 +3,11 @@ body {
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
+#sankey_basic {
+  border: 1px solid black;
+  padding: 10px;
+}
+
 a {
   color: #00B7FF;
 }

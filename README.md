@@ -6,6 +6,13 @@ sudo apt-get install libpcap-dev
 
 Also, make sure you install [Node.js](https://nodejs.org/en/) (this should also install NPM).
 
+You'll need the [Handlebars](http://handlebarsjs.com/) command line tool. You
+do that with:
+
+```
+sudo npm install -g handlebars
+```
+  
 Install all dependencies in `package.json`
 
 ```
@@ -17,16 +24,16 @@ Now install the `libpcap` binding.
 npm install git://github.com/mranney/node_pcap.git
 ```
 
-Finally, start the server (note that we use `sudo` to sniff all packets).
+Finally, start the server
+```
+npm start
+```
+
+If you want to read from a pcap file, you can instead do (the first command
+compiles the Handlebars templates):
 
 ```
-sudo node app.js
-```
-
-If you want to read from a pcap file, you can instead do:
-
-```
-sudo node app.js --pcap path/to/file.pcap --ffwd 1.0
+handlebars templates/* -f public/js/templates.js && sudo node app.js --pcap path/to/file.pcap --ffwd 1.0
 ```
 
 The `--ffwd` parameter is the playback rate. For example, 1.0 is normal playback, 2.0 is 2x speed.
