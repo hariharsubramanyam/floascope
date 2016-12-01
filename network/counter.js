@@ -12,7 +12,7 @@ class PacketCounter {
    *  Call the onTick function every interval milliseconds.
    * @param {Function} onTick -
    *  Executed every second with a map from source "IP:port" to the data
-   *  associated with that TCP session (see extractData).
+   *  associated with that TCP session.
    */
   constructor(interval, onTick) {
     this.onTick = onTick;
@@ -57,23 +57,55 @@ class PacketCounter {
     return session.src_name + "-" + session.dst_name;
   }
 
+  upsert(session, updateFn, insertFn) {
+    const key = this.key(session);
+    if (this.sessionMap.has(key)) {
+      const newData = updateFn(this.sessionMap.get(key));
+      this.sessionMap.set(key, newData);
+    } else {
+      this.sessionMap.set(key, insertFn());
+    }
+  }
+
   /**
    * Update the session map with the content of this session.
    * The session comes from the PacketSniffer.
    */
   updateSession(session) {
-    this.sessionMap.set(this.key(session), this.extractData(session));
+    const that = this;
+    this.upsert(
+      session, 
+      data => {
+        data.num_bytes = session.recv_bytes_payload;
+        return data;
+      },
+      () => that.extractData(session)
+    );
   }
 
-  /**
-   * Extract the data we care about from a given session.
-   */
+  retransmit(session) {
+    const that = this;
+    this.upsert(
+      session,
+      data => {
+        data.num_retransmits++;
+        return data;
+      },
+      () => {
+        const data = that.extractData(session);
+        data.num_retransmits++;
+        return data;
+      }
+    );
+  }
+
   extractData(session) {
     return {
       "src": session.src_name,
       "dst": session.dst_name,
       "num_bytes": session.recv_bytes_payload,
-      "interval": this.interval
+      "interval": this.interval,
+      "num_retransmits": 0
     };
   }
 
