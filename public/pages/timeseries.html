@@ -191,6 +191,9 @@
 
     var hover = new Hover( { graph: graph } );
 
+    var calculateThroughput = function(bytes, interval) {
+      return bytes/interval * 1000; //Throughput in #bytes/ms
+    };
 
     // update graph
     var graph_data = {};
@@ -203,6 +206,8 @@
       graph_data = {};
     }, tv );
 
+
+
     var ws = WebsocketHelper([function(data) {
       for (var i in Object.keys(data)) {
         var source_ip = Object.keys(data)[i];
@@ -213,10 +218,11 @@
         console.log(obj["interval"]);
         source_ip = obj.src_host || source_ip;
         var timestamp_s = obj["time_stamp"]/1000;
-        var throughput = obj["num_bytes"]/obj["interval"]*1000; // throughput in #bytes/ms
+        var throughput = calculateThroughput(obj["num_bytes"],obj["interval"]);
+        var retransmit_throughput = calculateThroughput(obj["retransmit_bytes"],obj["interval"]);
         if (!(timestamp_s in graph_data)) graph_data[timestamp_s] = {};
         if (!(source_ip in graph_data[timestamp_s])) graph_data[timestamp_s][source_ip] = 0;
-        console.log(timestamp_s + " - " + source_ip + " - " + throughput);
+        console.log(timestamp_s + " - " + source_ip + " - " + throughput + "");
         graph_data[timestamp_s][source_ip] = graph_data[timestamp_s][source_ip] + throughput;
 
       }
