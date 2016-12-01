@@ -41,10 +41,9 @@ class PacketSniffer {
       console.log("Start of session between: " + session.src_name + " and " + 
         session.dst_name);
 
-      session.on("data recv", session => {
-        // Update the session whenever we get new data.
-        counter.updateSession(session);
-      });
+      // Update the session whenever we get new data.
+      session.on("data recv", session => counter.updateSession(session));
+      session.on("data send", session => counter.updateSession(session));
 
       session.on("retransmit", (session, sendOrRecv, endOfData, len) => {
         // On retransmit, update the number of retransmissions.
