@@ -177,7 +177,7 @@ TCPSession.prototype.ESTAB = function (packet) {
         this.send_bytes_tcp += tcp.headerLength;
         if (tcp.dataLength > 0) {
             if (this.send_packets[tcp.seqno + tcp.dataLength]) {
-                this.emit("retransmit", this, "send", tcp.seqno + tcp.dataLength);
+                this.emit("retransmit", this, "send", tcp.seqno + tcp.dataLength, tcp.dataLength);
                 if (this.send_retrans[tcp.seqno + tcp.dataLength]) {
                     this.send_retrans[tcp.seqno + tcp.dataLength] += 1;
                 } else {
@@ -201,7 +201,7 @@ TCPSession.prototype.ESTAB = function (packet) {
         this.recv_bytes_tcp += tcp.headerLength;
         if (tcp.dataLength > 0) {
             if (this.recv_packets[tcp.seqno + tcp.dataLength]) {
-                this.emit("retransmit", this, "recv", tcp.seqno + tcp.dataLength);
+                this.emit("retransmit", this, "recv", tcp.seqno + tcp.dataLength, tcp.dataLength);
                 if (this.recv_retrans[tcp.seqno + tcp.dataLength]) {
                     this.recv_retrans[tcp.seqno + tcp.dataLength] += 1;
                 } else {

@@ -46,9 +46,9 @@ class PacketSniffer {
         counter.updateSession(session);
       });
 
-      session.on("retransmit", session => {
+      session.on("retransmit", (session, sendOrRecv, endOfData, len) => {
         // On retransmit, update the number of retransmissions.
-        counter.retransmit(session);
+        counter.retransmit(session, len);
       });
 
       session.on("end", session => {

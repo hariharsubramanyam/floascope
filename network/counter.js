@@ -109,7 +109,7 @@ class PacketCounter {
     );
   }
 
-  retransmit(session) {
+  retransmit(session, len) {
     const that = this;
     this.upsert(
       session,
@@ -120,6 +120,7 @@ class PacketCounter {
       () => {
         const data = that.extractData(session);
         data.num_retransmits++;
+        data.retransmit_bytes += len;
         return data;
       }
     );
@@ -133,7 +134,8 @@ class PacketCounter {
       "dst_host": null,
       "num_bytes": session.recv_bytes_payload,
       "interval": this.interval,
-      "num_retransmits": 0
+      "num_retransmits": 0,
+      "retransmit_bytes": 0
     };
   }
 
