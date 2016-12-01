@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title></title>
-  <link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css">
+  <link type="text/css" rel="stylesheet" href="">
   <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.runtime.min.js"></script>
   <script src="/js/templates.js"></script>
-
 
 	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
   <script src="../js/websocket_helper.js"></script>
@@ -17,7 +16,7 @@
   <script src="/js/ui/prefix_ui.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
-  <script src="http://fenixrepo.fao.org/cdn/faostat3/js/d3/d3.layout/1.0/d3.layout.js"></script> <!--sketchy cdn?-->  
+  <script src="http://fenixrepo.fao.org/cdn/faostat3/js/d3/d3.layout/1.0/d3.layout.js"></script> <!--sketchy cdn?-->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.6.0/rickshaw.min.js"></script>
   <!--<script src="../js/timeseries.js"></script>-->
 
@@ -38,11 +37,11 @@
   }
 
   #xlegend {
-          text-align: left;  
+          text-align: left;
   }
 
   #legend {
-          text-align: center;  
+          text-align: center;
   }
 
   #offset_form {
@@ -64,7 +63,7 @@
     .line {
       display: inline-block;
       margin: 0 0 0 30px;
-    }  
+    }
   #prefix_ui {
     margin-top: 90px;
   }
@@ -87,11 +86,14 @@
     </div>
     <div id="x-legend"></div><div id="legend"></div>
   </div>
+
   <div id="prefix_ui"></div>
-
-  <script> 
+  <div id="controls_container">
+      <button type="button"  id="play_toggle"> Pause </button>
+  </div>
+  <script>
     var prefixUI = PrefixUI("prefix_ui");
-
+    var paused = false;
     var tv = 250; // ms
     // instantiate
     var graph = new Rickshaw.Graph( {
@@ -101,7 +103,7 @@
         timeInterval: tv,
         maxDataPoints: 100,
         timeBase: new Date().getTime()/1000 // s
-      }) 
+      })
     } );
 
     // axes
@@ -124,11 +126,26 @@
             } else {
                     graph.setRenderer('stack');
                     graph.offset = offsetMode;
-            }       
+            }
             graph.render();
 
     }, false);
 
+    // Pause/Play toggle
+
+    var playToggle = document.getElementById('play_toggle');
+    playToggle.addEventListener('click', function(e){
+      console.log(paused);
+      if(paused){
+        paused = false;
+        playToggle.innerHTML = 'Pause';
+      }
+      else{
+        paused = true;
+        playToggle.innerHTML = 'Play'
+      }
+
+    }, false);
     // render for first time
     graph.render();
 
@@ -139,7 +156,7 @@
       render: function(args) {
         legend.innerHTML = "";
         xlegend.innerHTML = args.formattedXValue;
-        args.detail.sort(function(a, b) { 
+        args.detail.sort(function(a, b) {
           return a.order - b.order }
           ).forEach( function(d) {
             if (d.series.name != 'zero' && d.formattedYValue > 0) {
@@ -172,9 +189,9 @@
             }
     });
 
-    var hover = new Hover( { graph: graph } ); 
+    var hover = new Hover( { graph: graph } );
 
-  
+
     // update graph
     var graph_data = {};
     var iv = setInterval( function() {
@@ -182,7 +199,7 @@
         var timestamp_s = Object.keys(graph_data)[i];
         graph.series.addData(graph_data[timestamp_s], timestamp_s); // second granularity, for smoothness
       }
-      if (Object.keys(graph_data).length > 0) graph.render();
+      if (Object.keys(graph_data).length > 0 && !paused) graph.render();
       graph_data = {};
     }, tv );
 
