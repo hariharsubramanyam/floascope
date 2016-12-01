@@ -5,6 +5,7 @@
 const pcap = require("pcap");
 
 const PacketDelayer = require("./delayer");
+const TCPTracker = require("./tcp_tracker").TCPTracker;
 
 /**
  * This is the packet sniffer. It can either sniff actual packets or sniff
@@ -15,7 +16,7 @@ const PacketDelayer = require("./delayer");
 class PacketSniffer {
   constructor() {
     // This will clean raw packets and extract info about TCP sessions.
-    this.tcp_tracker = new pcap.TCPTracker();
+    this.tcp_tracker = new TCPTracker();
   }
 
   /**
