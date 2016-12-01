@@ -61,7 +61,7 @@ class PacketCounter {
 
     this.onTick(result);
 
-    for (var value of this.sessionMap.values()) value.num_bytes = 0;
+    this.sessionMap.values().forEach(v => v.num_bytes = 0);
   }
 
   stripPort(ipAndPort) {
