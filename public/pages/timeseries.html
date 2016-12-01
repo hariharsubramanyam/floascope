@@ -194,6 +194,7 @@
         }
         var obj = data[source_ip];
         console.log(obj["interval"]);
+        source_ip = obj.src_host || source_ip;
         var timestamp_s = obj["time_stamp"]/1000;
         var throughput = obj["num_bytes"]/obj["interval"]*1000; // throughput in #bytes/ms
         if (!(timestamp_s in graph_data)) graph_data[timestamp_s] = {};
