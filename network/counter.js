@@ -100,7 +100,10 @@ class PacketCounter {
     this.upsert(
       session, 
       data => {
-        data.num_bytes = session.recv_bytes_payload;
+        data.num_send_bytes = session.send_bytes_payload;
+        data.num_recv_bytes = session.recv_bytes_payload;
+        data.num_bytes = session.send_bytes_payload + 
+          session.recv_bytes_payload;
         return data;
       },
       () => {
@@ -132,7 +135,9 @@ class PacketCounter {
       "dst": session.dst_name,
       "src_host": null,
       "dst_host": null,
-      "num_bytes": session.recv_bytes_payload,
+      "num_bytes": session.recv_bytes_payload + session.send_bytes_payload,
+      "num_recv_bytes": session.recv_bytes_payload,
+      "num_send_bytes": session.send_bytes_payload,
       "interval": this.interval,
       "num_retransmits": 0,
       "retransmit_bytes": 0
