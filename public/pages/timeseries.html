@@ -218,13 +218,22 @@
         console.log(obj["interval"]);
         source_ip = obj.src_host || source_ip;
         var timestamp_s = obj["time_stamp"]/1000;
-        var throughput = calculateThroughput(obj["num_bytes"],obj["interval"]);
-        var retransmit_throughput = calculateThroughput(obj["retransmit_bytes"],obj["interval"]);
+
+        var total_throughput = calculateThroughput(obj["num_bytes"],obj["interval"]);
+        var send_throughput = calculateThroughput(obj["num_send_bytes"], obj["interval"]);
+        var recv_throughput = calculateThroughput(obj["num_recv_bytes"], obj["interval"]);
+
+        var total_retransmit_perc = obj["retransmit_bytes"]/obj["num_bytes"] * 100;
+        var send_retransmit_perc = obj["send_retransmit_bytes"]/obj["num_send_bytes"] * 100;
+        var recv_retransmit_perc = obj["recv_retransmit_bytes"]/obj["num_recv_bytes"] * 100;
+
+
+
         if (!(timestamp_s in graph_data)) graph_data[timestamp_s] = {};
         if (!(source_ip in graph_data[timestamp_s])) graph_data[timestamp_s][source_ip] = 0;
         console.log(timestamp_s + " - " + source_ip + " - " + throughput + "");
+        //Change this to 6 different additions: throughput, src_throughput, dst_throughput, byte percentage, src_byte_perc, and dst_byt_perc
         graph_data[timestamp_s][source_ip] = graph_data[timestamp_s][source_ip] + throughput;
-
       }
     }], [function() {
       console.log('Client has connected to the server!');
