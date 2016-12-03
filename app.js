@@ -14,27 +14,54 @@
  *  type --rnds, then reverse DNS lookups will NOT be performed.
  */
 
-var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
-var http = require('http');
+/*
+ * Imports
+ */
 
-var argv = require('yargs').argv;
+// A Node.js web framework.
+const express = require('express');
 
-var app = express();
-var port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
+// Alllows concatenation of path strings (used for constructing path to public
+// files).
+const path = require('path');
 
-var server = http.createServer(app);
+// Logs requests to console.
+const logger = require('morgan');
 
+// Parses cookies in requests.
+const cookieParser = require('cookie-parser');
+
+// Parses HTTP body.
+const bodyParser = require('body-parser');
+
+// Allows wrapping Express app with HTTP Server (needed for SocketIO).
+const http = require('http');
+
+// Parser command line args.
+const argv = require('yargs').argv;
+
+// Allows websocket communication.
+const SocketIO = require("socket.io");
+
+// Computes statistics based on packet data.
 const PacketCounter = require("./network/counter");
+
+// Produces packet data by sniffing.
 const PacketSniffer = require("./network/sniffer");
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+/*
+ * Express app setup
+ */
+const app = express();
+
+// TODO: Allow listening on ports other than 3000.
+const port = 3000;
+app.set('port', port);
+
+// Set up middleware. For each request, we do the following (in order):
+// Log the request, parse JSON in the body, parse URL-encoded data in the body,
+// parse the cookies, attempt to serve a static (e.g. CSS, HTML, JS) file if
+// it is requested.
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -42,39 +69,31 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
+app.use((req, res, next) => {
+  const err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
 
-// error handlers
-
-// development error handler
-// will print stacktrace
-if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.json({message: err.message});
-  });
-}
-
-// production error handler
-// no stacktraces leaked to user
-app.use(function(err, req, res, next) {
+// Handle errors.
+app.use((err, req, res, next) => {
   res.status(err.status || 500);
   res.json({message: err.message});
 });
 
 /**
- * This function accepts an HTTP server (created by ./bin/www) and augments
- * it with the SocketIO server and packet sniffer.
+ * Set up Socket IO.
+ * @param {HTTPServer} server - This is an HTTP server object that is produced
+ * by wrapping an Express app with http.createServer(app).
  */
-const setupSocketIo = http => {
-  const io = require("socket.io")(http);
+const setupSocketIo = server => {
+  // Create the websocket server by wrapping the HTTP server.
+  const io = SocketIO(server);
 
   // Create a packet counter that broadcasts the packet data
-  // to all socket listeners every second (1000 ms).
+  // to all socket listeners every second (1000 ms) on the vis_data channel.
+  // The argv.rdns parameter indicates whether IPs should be converted to 
+  // hostnames via reverse DNS.
   const counter = new PacketCounter(
     1000, 
     argv.rdns,
@@ -87,7 +106,7 @@ const setupSocketIo = http => {
   // Launch the packet sniffer. It will send its packets to the packet 
   // counter above. If a filepath has been given (argv.pcap), then we
   // will read from that pcap file. Otherwise, we will start sniffing actual
-  // packets.
+  // packets. The argv.ffwd is the playback rate, which defaults to 1.0.
   sniffer.sniff(
     counter,
     argv.ffwd || 1.0,
@@ -108,28 +127,19 @@ const setupSocketIo = http => {
 
 };
 
+/*
+ * Launch server
+ */
+
+// Wrap the Express app with an HTTP server and launch the SocketIO server.
+const server = http.createServer(app);
 setupSocketIo(server);
+
+// Attempt to launch server.
 server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
 
-function normalizePort(val) {
-  var port = parseInt(val, 10);
-
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
-
-  if (port >= 0) {
-    // port number
-    return port;
-  }
-
-  return false;
-}
-
-function onError(error) {
+// Handle failed server launch.
+server.on('error', error => {
   if (error.syscall !== 'listen') {
     throw error;
   }
@@ -151,12 +161,13 @@ function onError(error) {
     default:
       throw error;
   }
-}
+});
 
-function onListening() {
+// Handle successful launch.
+server.on('listening', () => {
   var addr = server.address();
   var bind = typeof addr === 'string' ? 
     'pipe ' + addr : 
     'port ' + addr.port;
   console.log('Listening on ' + bind);
-}
+});
