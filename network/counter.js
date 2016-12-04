@@ -49,13 +49,13 @@ class PacketCounter {
   tick() {
     // Extract data for every entry in the session map and call the onTick
     // function with the result.
-    const result = {};
+    const result = [];
     for (var value of this.sessionMap.values()) {
       value.time_stamp = (new Date()).getTime();
       value.src_host = this.rdns.lookup(this.stripPort(value.src));
       value.dst_host = this.rdns.lookup(this.stripPort(value.dst));
       if (value.num_bytes > 0) {
-        result[value.src] = value;
+        result.push(value);
       }
     }
 

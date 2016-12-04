@@ -25,15 +25,12 @@
     // Draw the Sankey diagram.
     Sankey("sankey_basic", data, {}, function(sankey) {
       var ws = WebsocketHelper([function(data) {
-        var rows = Object.keys(data)
-          .filter(function(key) {
-            var obj = data[key];
-            return prefixUI.filter().matchesFilter(key) 
+        var rows = data.filter(function(obj) {
+            return prefixUI.filter().matchesFilter(obj.src) 
               || prefixUI.filter().matchesFilter(obj.dst);
           })
-          .map(function(key) {
-            var obj = data[key];
-            var realSrc = obj.src_host || key;
+          .map(function(obj) {
+            var realSrc = obj.src_host || obj.src;
             var realDst = obj.dst_host || obj.dst;
             return [realSrc, "" + realDst, obj.num_bytes];
           });
