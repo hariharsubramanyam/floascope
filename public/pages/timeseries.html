@@ -10,6 +10,7 @@
 
 	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
   <script src="../js/websocket_helper.js"></script>
+  <script src="../js/flattener.js"></script>
 
   <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.6.0/rickshaw.min.css">
   <script src="/js/prefix_filter.js"></script>
@@ -209,6 +210,7 @@
 
 
     var ws = WebsocketHelper([function(data) {
+      data = Flatten(data);
       data.filter(function(obj) {
         return prefixUI.filter().matchesFilter(obj.src) 
           || prefixUI.filter().matchesFilter(obj.dst);

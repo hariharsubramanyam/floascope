@@ -9,6 +9,7 @@
   <script src="https://www.gstatic.com/charts/loader.js"></script>
   <link rel="stylesheet" href="/css/style.css">
   <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/flattener.js"></script>
   <script src="/js/websocket_helper.js"></script>
   <script src="/js/sankey.js"></script>
   <script src="/js/prefix_filter.js"></script>
@@ -25,6 +26,7 @@
     // Draw the Sankey diagram.
     Sankey("sankey_basic", data, {}, function(sankey) {
       var ws = WebsocketHelper([function(data) {
+        data = Flatten(data);
         var rows = data.filter(function(obj) {
             return prefixUI.filter().matchesFilter(obj.src) 
               || prefixUI.filter().matchesFilter(obj.dst);
