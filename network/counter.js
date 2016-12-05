@@ -10,7 +10,7 @@ const ReverseDns = require("./reverse_dns");
  */
 class PacketCounter {
   /**
-   * @param {Number} interval - 
+   * @param {Number} interval -
    *  Call the onTick function every interval milliseconds.
    * @param {Boolean} shouldUseReverseDns -
    *  Whether the server should perform reverse DNS lookups of IP addresses.
@@ -54,6 +54,9 @@ class PacketCounter {
       value.time_stamp = (new Date()).getTime();
       value.src_host = this.rdns.lookup(this.stripPort(value.src));
       value.dst_host = this.rdns.lookup(this.stripPort(value.dst));
+
+
+
       if (value.num_bytes > 0) {
         result.push(value);
       }
@@ -98,11 +101,17 @@ class PacketCounter {
   updateSession(session) {
     const that = this;
     this.upsert(
-      session, 
+      session,
       data => {
+//        Calculate instantaneous values based on last interval information
+        data.num_bytes_inst = session.send_bytes_payload +
+          session.recv_bytes_payload - data.num_bytes;
+        data.num_recv_bytes_inst = session.recv_bytes_payload - data.num_recv_bytes;
+        data.num_send_bytes_inst = session.send_bytes_payload - data.num_send_bytes;
+
         data.num_send_bytes = session.send_bytes_payload;
         data.num_recv_bytes = session.recv_bytes_payload;
-        data.num_bytes = session.send_bytes_payload + 
+        data.num_bytes = session.send_bytes_payload +
           session.recv_bytes_payload;
         return data;
       },
@@ -117,7 +126,12 @@ class PacketCounter {
     this.upsert(
       session,
       data => {
+        data.num_retrans_bytes_inst = len;
+        data.num_send_retrans_bytes_inst = 0;
+        data.num_recv_retrans_bytes_inst = 0;
+
         data.num_retransmits++;
+        data.retransmit_bytes += len;
         return data;
       },
       () => {
@@ -131,6 +145,7 @@ class PacketCounter {
 
   extractData(session) {
     return {
+      "key": key(session),
       "src": session.src_name,
       "dst": session.dst_name,
       "src_host": null,
@@ -138,6 +153,16 @@ class PacketCounter {
       "num_bytes": session.recv_bytes_payload + session.send_bytes_payload,
       "num_recv_bytes": session.recv_bytes_payload,
       "num_send_bytes": session.send_bytes_payload,
+
+      "num_bytes_inst" : session.send_bytes_payload +
+        session.recv_bytes_payload - data.num_bytes,
+      "num_send_bytes_inst" : session.send_bytes_payload - data.num_send_bytes,
+      "num_recv_bytes_inst" : session.recv_bytes_payload - data.num_recv_bytes,
+
+      "num_retrans_bytes_inst" : 0,
+      "num_send_retrans_bytes_inst" : 0,
+      "num_recv_retrans_bytes_inst" : 0,
+
       "interval": this.interval,
       "num_retransmits": 0,
       "retransmit_bytes": 0
