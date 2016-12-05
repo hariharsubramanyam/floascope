@@ -102,7 +102,7 @@
       renderer: 'line',
       series: new Rickshaw.Series.FixedDuration([{ name: 'zero' }], undefined, {
         timeInterval: tv,
-        maxDataPoints: 100,
+        maxDataPoints: 60*1000/tv, // show a minute of data
         timeBase: new Date().getTime()/1000 // s
       })
     } );
