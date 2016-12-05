@@ -311,7 +311,7 @@ float: right;
         //Keys are defined as constants at the top, and this (graph.series) should be repopulated whenever the toggle occurs.
         //When it does, find the appropriate accumulator, and cycle through it's list pairs so you have the inputs to the addData function, index 0 for data, 1 for ts
 
-        graph.series.addData(graph_data[timestamp_s], timestamp_s); // second granularity, for smoothness
+        graph.series.addData(graph_data[timestamp_s][TOTAL_THROUGHPUT], timestamp_s); // second granularity, for smoothness
       }
       if (!paused) graph.render();
       graph_data = {};
@@ -333,9 +333,9 @@ float: right;
         var send_throughput = calculateThroughput(obj["num_send_bytes_inst"], obj["interval"]);
         var recv_throughput = calculateThroughput(obj["num_recv_bytes_inst"], obj["interval"]);
 
-        var total_retrans_percentage = obj["retransmit_bytes"]/obj["num_bytes"] * 100;
-        var send_retrans_percentage = obj["send_retransmit_bytes"]/obj["num_send_bytes"] * 100;
-        var recv_retrans_percentage = obj["recv_retransmit_bytes"]/obj["num_recv_bytes"] * 100;
+        var total_retrans_percentage = obj["num_retrans_bytes_inst"]/obj["num_bytes_inst"] * 100;
+        var send_retrans_percentage = obj["send_retrans_bytes_inst"]/obj["num_send_bytes_inst"] * 100;
+        var recv_retrans_percentage = obj["recv_retrans_bytes_inst"]/obj["num_recv_bytes_inst"] * 100;
 
         if (!(timestamp_s in graph_data)) graph_data[timestamp_s] = {};
         if (!(source_ip in graph_data[timestamp_s])) graph_data[timestamp_s][source_ip] = 0;

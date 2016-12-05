@@ -30,6 +30,7 @@ class PacketCounter {
 
     // This maps from "source IP:port - dest IP:port" to the data for that flow.
     this.sessionMap = new Map();
+    this.lastSessionMap = new Map();
 
     // Execute the tick function every interval.
     const that = this;
@@ -50,18 +51,32 @@ class PacketCounter {
     // Extract data for every entry in the session map and call the onTick
     // function with the result.
     const result = [];
-    for (var value of this.sessionMap.values()) {
+
+    for (var key in this.sessionMap.keys()) {
+
+      var value = this.sessionMap[key];
+      var lastValue = this.lastSessionMap[key];
+
       value.time_stamp = (new Date()).getTime();
       value.src_host = this.rdns.lookup(this.stripPort(value.src));
       value.dst_host = this.rdns.lookup(this.stripPort(value.dst));
 
+      // value.num_bytes_inst = lastValue ? value.num_bytes - lastValue.num_bytes : value.num_bytes;
+      // value.num_send_bytes_inst = lastValue ? value.num_send_bytes - lastValue.num_send_bytes : value.num_send_bytes;
+      // value.num_recv_bytes_inst = lastValue ? value.num_recv_bytes - lastValue.num_recv_bytes : value.num_recv_bytes;
+      //
+      // value.num_retrans_bytes_inst = lastValue ? value.retransmit_bytes - lastValue.retransmit_bytes : value.retransmit_bytes;
+      //TODO: Keertan, make this work
+      //value.num_send_retrans_bytes_inst : 0,
+      //value.num_recv_retrans_bytes_inst : 0
 
 
       if (value.num_bytes > 0) {
         result.push(value);
       }
+      console.log(value)
     }
-
+    this.lastSessionMap = this.sessionMap;
     this.onTick(result);
 
     //this.sessionMap.forEach(v => v.num_bytes = 0);
@@ -103,11 +118,11 @@ class PacketCounter {
     this.upsert(
       session,
       data => {
-//        Calculate instantaneous values based on last interval information
-        data.num_bytes_inst = session.send_bytes_payload +
-          session.recv_bytes_payload - data.num_bytes;
-        data.num_recv_bytes_inst = session.recv_bytes_payload - data.num_recv_bytes;
-        data.num_send_bytes_inst = session.send_bytes_payload - data.num_send_bytes;
+// //        Calculate instantaneous values based on last interval information
+        // data.num_bytes_inst = session.send_bytes_payload +
+        //   session.recv_bytes_payload - data.num_bytes;
+        // data.num_recv_bytes_inst = session.recv_bytes_payload - data.num_recv_bytes;
+        // data.num_send_bytes_inst = session.send_bytes_payload - data.num_send_bytes;
 
         data.num_send_bytes = session.send_bytes_payload;
         data.num_recv_bytes = session.recv_bytes_payload;
@@ -127,6 +142,7 @@ class PacketCounter {
       session,
       data => {
         data.num_retrans_bytes_inst = len;
+        //TODO: Keertan Fix, if possible, to differentiate
         data.num_send_retrans_bytes_inst = 0;
         data.num_recv_retrans_bytes_inst = 0;
 
@@ -145,7 +161,7 @@ class PacketCounter {
 
   extractData(session) {
     return {
-      "key": key(session),
+      "key": this.key(session),
       "src": session.src_name,
       "dst": session.dst_name,
       "src_host": null,
@@ -154,10 +170,9 @@ class PacketCounter {
       "num_recv_bytes": session.recv_bytes_payload,
       "num_send_bytes": session.send_bytes_payload,
 
-      "num_bytes_inst" : session.send_bytes_payload +
-        session.recv_bytes_payload - data.num_bytes,
-      "num_send_bytes_inst" : session.send_bytes_payload - data.num_send_bytes,
-      "num_recv_bytes_inst" : session.recv_bytes_payload - data.num_recv_bytes,
+      "num_bytes_inst" : 0,
+      "num_send_bytes_inst" : 0,
+      "num_recv_bytes_inst" : 0,
 
       "num_retrans_bytes_inst" : 0,
       "num_send_retrans_bytes_inst" : 0,
