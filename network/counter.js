@@ -52,9 +52,8 @@ class PacketCounter {
     // function with the result.
     const result = [];
 
-    for (var key in this.sessionMap.keys()) {
-
-      var value = this.sessionMap[key];
+    this.sessionMap.forEach( (value, key, map) => {
+      //var value = this.sessionMap[key];
       var lastValue = this.lastSessionMap[key];
 
       value.time_stamp = (new Date()).getTime();
@@ -73,8 +72,9 @@ class PacketCounter {
         result.push(value);
       }
       console.log(value)
-    }
-    this.lastSessionMap = this.sessionMap;
+
+    })
+    this.lastSessionMap = new Map(this.sessionMap);
     this.onTick(result);
 
     //this.sessionMap.forEach(v => v.num_bytes = 0);
@@ -124,8 +124,7 @@ class PacketCounter {
 
         data.num_send_bytes = session.send_bytes_payload;
         data.num_recv_bytes = session.recv_bytes_payload;
-        data.num_bytes = session.send_bytes_payload +
-          session.recv_bytes_payload;
+        data.num_bytes = session.send_bytes_payload + session.recv_bytes_payload;
         return data;
       },
       () => {
