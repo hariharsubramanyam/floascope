@@ -208,7 +208,7 @@ float: right;
       SEND_RETRANS_PERCENTAGE: [],
       RECV_RETRANS_PERCENTAGE: []
     };
-    var tv = 250; // ms
+    var tv = 1000; // ms
     // instantiate
     var graph = new Rickshaw.Graph( {
       element: document.getElementById("chart"),
@@ -367,7 +367,7 @@ float: right;
 
 
         var timestamp_s = obj.time_stamp / 1000;
-        var total_throughput = calculateThroughput(obj["num_bytes"],obj["interval"]); // num_bytes_inst
+        var total_throughput = calculateThroughput(obj["num_bytes_inst"],obj["interval"]); // num_bytes_inst
         var send_throughput = calculateThroughput(obj["num_send_bytes_inst"], obj["interval"]);
         var recv_throughput = calculateThroughput(obj["num_recv_bytes_inst"], obj["interval"]);
 
@@ -396,15 +396,15 @@ float: right;
         if (!(dest_ip in graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE])) graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE][dest_ip] = 0;
 
 
-        if (!(source_ip in graph_data[timestamp_s])) graph_data[timestamp_s][source_ip] = 0; // what is this for???
+        //if (!(source_ip in graph_data[timestamp_s])) graph_data[timestamp_s][source_ip] = 0; // what is this for???
 
-        graph_data[timestamp_s][TOTAL_THROUGHPUT][key] = graph_data[timestamp_s][TOTAL_THROUGHPUT][key] + total_throughput;
-        graph_data[timestamp_s][SEND_THROUGHPUT][source_ip] = graph_data[timestamp_s][SEND_THROUGHPUT][source_ip] + send_throughput;
-        graph_data[timestamp_s][RECV_THROUGHPUT][dest_ip] = graph_data[timestamp_s][RECV_THROUGHPUT][dest_ip] + recv_throughput;
-        graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE][key] = graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE][source_ip] + total_retrans_percentage;
-        graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE][source_ip] = graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE][source_ip] + send_retrans_percentage;
-        graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE][dest_ip] = graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE][dest_ip] + recv_retrans_percentage;
-        //console.log(graph_data[timestamp_s]);
+        graph_data[timestamp_s][TOTAL_THROUGHPUT][key] += total_throughput;
+        graph_data[timestamp_s][SEND_THROUGHPUT][source_ip] += send_throughput;
+        graph_data[timestamp_s][RECV_THROUGHPUT][dest_ip] += recv_throughput;
+        graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE][key] += total_retrans_percentage;
+        graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE][source_ip] += send_retrans_percentage;
+        graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE][dest_ip] += recv_retrans_percentage;
+        console.log(graph_data[timestamp_s]);
       });
     }], [function() {
       console.log('Client has connected to the server!');

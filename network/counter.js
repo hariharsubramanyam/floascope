@@ -71,8 +71,6 @@ class PacketCounter {
       if (value.num_bytes > 0) {
         result.push(value);
       }
-      console.log(value)
-
     })
     this.lastSessionMap = new Map(this.sessionMap);
     this.onTick(result);
