@@ -22,76 +22,169 @@
   <!--<script src="../js/timeseries.js"></script>-->
 
 <style>
-  #chart_container {
-          position: relative;
-          font-family: Arial, Helvetica, sans-serif;
-  }
-  #chart {
-          position: relative;
-          left: 40px;
-  }
-  #y_axis {
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          width: 40px;
-  }
 
-  #xlegend {
-          text-align: left;
-  }
+body {
+padding: 30px;
+font-family: Arial, Helvetica, sans-serif;
+}
 
-  #legend {
-          text-align: center;
-  }
+#chart_container {
+position: relative;
+width:1200px; 
+height:400px;
+width: 90%;
+}
 
-  #offset_form {
-          float: left;
-          margin: 2em 0 0 15px;
-          font-size: 13px;
-  }
+#chart {
+position: relative;
+left: 40px;
+}
 
+#y_axis {
+position: absolute;
+top: 0;
+bottom: 0;
+width: 40px;
+}
 
-    .swatch {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      margin: 0 8px 0 0;
-    }
-    .label {
-      display: inline-block;
-    }
-    .line {
-      display: inline-block;
-      margin: 0 0 0 30px;
-    }
-  #prefix_ui {
-    margin-top: 90px;
-  }
+#legend_container {
+  font-size: 1.5em;
+}
+
+#xlegend {
+text-align: left;
+}
+
+#legend {
+text-align: left;
+}
+
+.swatch {
+display: inline-block;
+width: 10px;
+height: 10px;
+margin: 0 8px 0 0;
+}
+
+.label {
+display: inline-block;
+}
+
+.line {
+display: inline-block;
+margin-top: 8px;
+}
+
+#header {
+height: 100px;
+margin-top: 20px;
+margin-bottom: 20px;
+width: 1200px;
+}
+
+#prefix_ui {
+width: 90%;
+float: left;
+}
+
+#controls_container {
+float: right;
+}
+
+#graph_options {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+#graph_option_y_axis {
+  width: 30%;
+  float: left;
+}
+
+#graph_option_filter {
+  width: 30%;
+  float: left;
+}
+
+#graph_option_view {
+  width: 30%;
+  float: left;
+}
+
+#content {
+  width: 75%;
+  height: 100%;  
+  float: left;
+}
+
+#legend_container {
+  width: 25%;
+  height: 400px;
+  float: left;
+}
+
 </style>
 
 
 </head>
 <body>
-  <div id="chart_container">
-    <div>
-      <div id="y_axis"></div>
-      <div id="chart" style="width:1200px; height:400px;"></div>
-      <form id="offset_form" class="toggler">
-              <input checked type="radio" name="offset" id="lines" value="lines">
-              <label class="lines" for="lines">lines</label>
-              <br>
-              <input type="radio" name="offset" id="stack" value="zero">
-              <label class="stack" for="stack">stack</label>
-      </form>
+
+  <div id="header">
+    <div id="prefix_ui"></div>
+    <div id="controls_container">
+        <button type="button"  id="play_toggle"> Pause </button>
     </div>
-    <div id="x-legend"></div><div id="legend"></div>
+
   </div>
 
-  <div id="prefix_ui"></div>
-  <div id="controls_container">
-      <button type="button"  id="play_toggle"> Pause </button>
-  </div>
+  <div id="content">
+    <div id="chart_container">
+
+      <!-- graph html -->
+      <div>
+        <div id="y_axis"></div>
+        <div id="chart" style="height:400px; width:1200px"></div>
+      </div>
+
+      <div id="graph_options">
+
+        <form id="graph_option_y_axis" class="toggler">
+                <div><b>y axis</b></div>
+                <input checked type="radio" name="y-axis" id="throughput" value="throughput">
+                  <label class="throughput" for="throughput">bytes/second</label><br>
+                <input type="radio" name="y-axis" id="retransmits" value="retransmits">
+                  <label class="retransmits" for="retransmits">percent retransmits/second</label>
+        </form>
+
+        <form id="graph_option_filter" class="toggler">
+                <div><b>graph filter</b></div>        
+                <input checked type="radio" name="filter" id="all" value="all">
+                  <label class="all" for="all">all pairs</label><br>
+                <input type="radio" name="filter" id="to" value="to">
+                  <label class="to" for="to">traffic to [prefix]</label><br>
+                <input type="radio" name="filter" id="from" value="from">
+                  <label class="from" for="from">traffic from [prefix]</label><br>
+        </form>
+
+        <form id="graph_option_view" class="toggler">
+                <div><b>graph style</b></div>        
+                <input checked type="radio" name="offset" id="lines" value="lines">
+                  <label class="lines" for="lines">lines</label><br>
+                <input type="radio" name="offset" id="stack" value="zero">
+                  <label class="stack" for="stack">stack</label>
+        </form>
+      </div> <!-- graph_options -->
+    </div> <!-- chart_container -->
+  
+
+  </div> <!-- content --> 
+  
+  <div id="legend_container">
+    <div id="x-legend"></div>
+    <div id="legend"></div>
+  </div> <!-- legend_container -->
+
+
   <script>
     var prefixUI = PrefixUI("prefix_ui");
     var paused = false;
@@ -117,7 +210,7 @@
     } );
 
     // line/stack graph type toggle
-    var offsetForm = document.getElementById('offset_form');
+    var offsetForm = document.getElementById('graph_option_view');
     offsetForm.addEventListener('change', function(e) {
             var offsetMode = e.target.value;
 
@@ -203,7 +296,7 @@
         var timestamp_s = Object.keys(graph_data)[i];
         graph.series.addData(graph_data[timestamp_s], timestamp_s); // second granularity, for smoothness
       }
-      if (Object.keys(graph_data).length > 0 && !paused) graph.render();
+      if (!paused) graph.render();
       graph_data = {};
     }, tv );
 
