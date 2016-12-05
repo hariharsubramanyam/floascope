@@ -4,7 +4,7 @@
 // This is the packet sniffing library.
 const pcap = require("pcap");
 
-// When reading packets from a file, we can't play them back all at once, we 
+// When reading packets from a file, we can't play them back all at once, we
 // need to delay them according to their timestamps. This contains the logic
 // for delaying packets.
 const PacketDelayer = require("./delayer");
@@ -38,15 +38,15 @@ class PacketSniffer {
    */
   sniff(counter, ffwd, path) {
     // Set up the session.
-    const pcap_session = (path) ? 
-      pcap.createOfflineSession(path, "") : 
+    const pcap_session = (path) ?
+      pcap.createOfflineSession(path, "") :
       pcap.createSession("", "ip proto \\tcp");
 
     // Set up the TCP tracker.
     this.tcp_tracker.on("session", session => {
       // Indicate that a new session has occured.
       counter.updateSession(session);
-      console.log("Start of session between: " + session.src_name + " and " + 
+      console.log("Start of session between: " + session.src_name + " and " +
         session.dst_name);
 
       // Update the session whenever we get new data.
@@ -56,7 +56,7 @@ class PacketSniffer {
       // On retransmit, notify that the counter that a retransmissing (of
       // the given byte length) has occured for the given session.
       session.on("retransmit", (session, sendOrRecv, endOfData, len) => {
-        counter.retransmit(session, len);
+        counter.retransmit(session, len, sendOrRecv);
       });
 
       // Purge the session when it closes.
@@ -68,8 +68,8 @@ class PacketSniffer {
     });
 
     // We need to set up a packet delayer that we send our packets to after
-    // we sniff them. For live packet sniffing, the delay will simply let the 
-    // pass through right away. For playing back packets from a file, the 
+    // we sniff them. For live packet sniffing, the delay will simply let the
+    // pass through right away. For playing back packets from a file, the
     // delayer will examine the timestamp and desired playback rate (ffwd) and
     // will decide when to actually let the packet pass through.
     const tracker = this.tcp_tracker;

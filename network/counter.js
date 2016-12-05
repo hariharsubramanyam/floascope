@@ -61,14 +61,12 @@ class PacketCounter {
       value.src_host = this.rdns.lookup(this.stripPort(value.src));
       value.dst_host = this.rdns.lookup(this.stripPort(value.dst));
 
-      // value.num_bytes_inst = lastValue ? value.num_bytes - lastValue.num_bytes : value.num_bytes;
-      // value.num_send_bytes_inst = lastValue ? value.num_send_bytes - lastValue.num_send_bytes : value.num_send_bytes;
-      // value.num_recv_bytes_inst = lastValue ? value.num_recv_bytes - lastValue.num_recv_bytes : value.num_recv_bytes;
-      //
-      // value.num_retrans_bytes_inst = lastValue ? value.retransmit_bytes - lastValue.retransmit_bytes : value.retransmit_bytes;
-      //TODO: Keertan, make this work
-      //value.num_send_retrans_bytes_inst : 0,
-      //value.num_recv_retrans_bytes_inst : 0
+      value.num_bytes_inst = lastValue ? value.num_bytes - lastValue.num_bytes : value.num_bytes;
+      value.num_send_bytes_inst = lastValue ? value.num_send_bytes - lastValue.num_send_bytes : value.num_send_bytes;
+      value.num_recv_bytes_inst = lastValue ? value.num_recv_bytes - lastValue.num_recv_bytes : value.num_recv_bytes;
+      value.num_retrans_bytes_inst = lastValue ? value.retransmit_bytes - lastValue.retransmit_bytes : value.retransmit_bytes;
+      value.num_send_retrans_bytes_inst = lastValue ? value.send_retransmit_bytes - lastValue.send_retransmit_bytes : value.send_retransmit_bytes;
+      value.num_recv_retrans_bytes_inst = lastValue ? value.recv_retransmit_bytes - lastValue.recv_retransmit_bytes : value.recv_retransmit_bytes;
 
 
       if (value.num_bytes > 0) {
@@ -136,15 +134,18 @@ class PacketCounter {
     );
   }
 
-  retransmit(session, len) {
+  retransmit(session, len, sendOrRecv) {
     const that = this;
+    console.log(sendOrRecv);
     this.upsert(
       session,
       data => {
-        data.num_retrans_bytes_inst = len;
-        //TODO: Keertan Fix, if possible, to differentiate
-        data.num_send_retrans_bytes_inst = 0;
-        data.num_recv_retrans_bytes_inst = 0;
+        if (sendOrRecv === "send"){
+          data.send_retransmit_bytes += len;
+        }
+        else{
+          data.recv_retransmit_bytes += len;
+        }
 
         data.num_retransmits++;
         data.retransmit_bytes += len;
@@ -180,7 +181,9 @@ class PacketCounter {
 
       "interval": this.interval,
       "num_retransmits": 0,
-      "retransmit_bytes": 0
+      "retransmit_bytes": 0,
+      "send_retransmit_bytes" : 0,
+      "recv_retransmit_bytes" : 0
     };
   }
 
