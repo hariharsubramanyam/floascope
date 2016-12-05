@@ -48,7 +48,7 @@ width: 40px;
 }
 
 #legend_container {
-  font-size: 1.5em;
+  font-size: 1.2em;
 }
 
 #xlegend {
@@ -187,16 +187,27 @@ float: right;
 
   <script>
 
-    const TOTAL_THROUGPUT = "total_throughput";
+    const TOTAL_THROUGHPUT = "total_throughput";
     const SEND_THROUGHPUT = "send_throughput";
-    const RECV_THROUGPUT = "recv_throughput";
+    const RECV_THROUGHPUT = "recv_throughput";
     const TOTAL_RETRANS_PERCENTAGE = "total_retransmit_perc";
     const SEND_RETRANS_PERCENTAGE = "send_retransmit_perc";
     const RECV_RETRANS_PERCENTAGE = "recv_retransmit_perc";
 
+    var current_graph = TOTAL_THROUGHPUT;
+    var viewMode = "throughput";
+    var filterMode = "all";
+
     var prefixUI = PrefixUI("prefix_ui");
     var paused = false;
-    var graph_data_accumulator = {};
+    var graph_data_accumulator = {
+      TOTAL_THROUGHPUT: [],
+      SEND_THROUGHPUT: [],
+      RECV_THROUGHPUT: [],
+      TOTAL_RETRANS_PERCENTAGE: [],
+      SEND_RETRANS_PERCENTAGE: [],
+      RECV_RETRANS_PERCENTAGE: []
+    };
     var tv = 250; // ms
     // instantiate
     var graph = new Rickshaw.Graph( {
@@ -218,21 +229,47 @@ float: right;
             element: document.getElementById('y_axis'),
     } );
 
-    // line/stack graph type toggle
-    var offsetForm = document.getElementById('graph_option_view');
-    offsetForm.addEventListener('change', function(e) {
-            var offsetMode = e.target.value;
+    var updateCurrentGraph = function() {
+      if (viewMode == 'throughput') {
+        if (filterMode == 'all') current_graph = TOTAL_THROUGHPUT;
+        if (filterMode == 'to') current_graph = SEND_THROUGHPUT;
+        if (filterMode == 'from') current_graph = RECV_THROUGHPUT;                
+      } else if (viewMode == 'retransmits') {
+        if (filterMode == 'all') current_graph = TOTAL_RETRANS_PERCENTAGE;
+        if (filterMode == 'to') current_graph = SEND_RETRANS_PERCENTAGE;
+        if (filterMode == 'from') current_graph = RECV_RETRANS_PERCENTAGE;                
+      }  
+      console.log(current_graph);          
+    }
 
-            if (offsetMode == 'lines') {
-                    graph.setRenderer('line');
-                    graph.offset = 'zero';
-            } else {
-                    graph.setRenderer('stack');
-                    graph.offset = offsetMode;
-            }
-            graph.render();
-
+    // y axis toggle
+    var yForm = document.getElementById('graph_option_y_axis');
+    yForm.addEventListener('change', function(e) {
+      viewMode = e.target.value;
+      updateCurrentGraph();
     }, false);
+
+    // line/stack graph type toggle
+    var filterForm = document.getElementById('graph_option_filter');
+    filterForm.addEventListener('change', function(e) {
+      filterMode = e.target.value;
+      updateCurrentGraph();
+    }, false);
+
+    // line/stack graph type toggle
+    var viewForm = document.getElementById('graph_option_view');
+    viewForm.addEventListener('change', function(e) {
+      var offsetMode = e.target.value;
+
+      if (offsetMode == 'lines') {
+              graph.setRenderer('line');
+              graph.offset = 'zero';
+      } else {
+              graph.setRenderer('stack');
+              graph.offset = offsetMode;
+      }
+      graph.render();
+    }, false);        
 
     // Pause/Play toggle
 
@@ -295,23 +332,21 @@ float: right;
     var hover = new Hover( { graph: graph } );
 
     var calculateThroughput = function(bytes, interval) {
-      return bytes/interval * 1000; //Throughput in #bytes/ms
+      return bytes/interval * 1000 || 0; //Throughput in #bytes/ms; return 0 if anything is null
     };
 
     // update graph
     var graph_data = {};
     var iv = setInterval( function() {
-      for (i in Object.keys(graph_data)) {
+      for (var i in Object.keys(graph_data)) {
         var timestamp_s = Object.keys(graph_data)[i];
 
-        for (j in Object.keys(graph_data[timestamp_s])) {
-          graph_data_accumulator[j].push([graph_data[timestamp_s][j], timestamp_s]);
+        for (var j in Object.keys(graph_data[timestamp_s])) {
+          //graph_data_accumulator[j].push([graph_data[timestamp_s][j], timestamp_s]);
         }
-        //TODO: Merry, please hook up the toggle of views so that way each key can be properly used
-        //Keys are defined as constants at the top, and this (graph.series) should be repopulated whenever the toggle occurs.
-        //When it does, find the appropriate accumulator, and cycle through it's list pairs so you have the inputs to the addData function, index 0 for data, 1 for ts
+        graph.series.addData(graph_data[timestamp_s][current_graph], timestamp_s); // second granularity, for smoothness
+        //console.log(graph_data[timestamp_s][current_graph]);
 
-        graph.series.addData(graph_data[timestamp_s][TOTAL_THROUGHPUT], timestamp_s); // second granularity, for smoothness
       }
       if (!paused) graph.render();
       graph_data = {};
@@ -325,20 +360,43 @@ float: right;
         return prefixUI.filter().matchesFilter(obj.src)
           || prefixUI.filter().matchesFilter(obj.dst);
       }).forEach(function(obj) {
+
         var source_ip = obj.src_host || obj.src;
         var dest_ip = obj.dst_host || obj.dst;
+        var key = source_ip + "->" + dest_ip; // doing this since obj.key includes port numbers
+
 
         var timestamp_s = obj.time_stamp / 1000;
-        var total_throughput = calculateThroughput(obj["num_bytes_inst"],obj["interval"]);
+        var total_throughput = calculateThroughput(obj["num_bytes"],obj["interval"]); // num_bytes_inst
         var send_throughput = calculateThroughput(obj["num_send_bytes_inst"], obj["interval"]);
         var recv_throughput = calculateThroughput(obj["num_recv_bytes_inst"], obj["interval"]);
 
-        var total_retrans_percentage = obj["num_retrans_bytes_inst"]/obj["num_bytes_inst"] * 100;
-        var send_retrans_percentage = obj["send_retrans_bytes_inst"]/obj["num_send_bytes_inst"] * 100;
-        var recv_retrans_percentage = obj["recv_retrans_bytes_inst"]/obj["num_recv_bytes_inst"] * 100;
+        var total_retrans_percentage = obj["num_retrans_bytes_inst"]/obj["num_bytes_inst"] * 100 || 0;
+        var send_retrans_percentage = obj["send_retrans_bytes_inst"]/obj["num_send_bytes_inst"] * 100 || 0;
+        var recv_retrans_percentage = obj["recv_retrans_bytes_inst"]/obj["num_recv_bytes_inst"] * 100 || 0;
 
         if (!(timestamp_s in graph_data)) graph_data[timestamp_s] = {};
-        if (!(source_ip in graph_data[timestamp_s])) graph_data[timestamp_s][source_ip] = 0;
+
+        if (!(TOTAL_THROUGHPUT in graph_data[timestamp_s])) graph_data[timestamp_s][TOTAL_THROUGHPUT] = {};
+        if (!(key in graph_data[timestamp_s][TOTAL_THROUGHPUT])) graph_data[timestamp_s][TOTAL_THROUGHPUT][key] = 0;
+ 
+        if (!(SEND_THROUGHPUT in graph_data[timestamp_s])) graph_data[timestamp_s][SEND_THROUGHPUT] = {};          
+        if (!(source_ip in graph_data[timestamp_s][SEND_THROUGHPUT])) graph_data[timestamp_s][SEND_THROUGHPUT][source_ip] = 0;
+ 
+        if (!(RECV_THROUGHPUT in graph_data[timestamp_s])) graph_data[timestamp_s][RECV_THROUGHPUT] = {};          
+        if (!(dest_ip in graph_data[timestamp_s][RECV_THROUGHPUT])) graph_data[timestamp_s][RECV_THROUGHPUT][dest_ip] = 0;
+
+        if (!(TOTAL_RETRANS_PERCENTAGE in graph_data[timestamp_s])) graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE] = {};
+        if (!(key in graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE])) graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE][key] = 0;
+
+        if (!(SEND_RETRANS_PERCENTAGE in graph_data[timestamp_s])) graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE] = {};
+        if (!(source_ip in graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE])) graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE][source_ip] = 0;
+
+        if (!(RECV_RETRANS_PERCENTAGE in graph_data[timestamp_s])) graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE] = {};
+        if (!(dest_ip in graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE])) graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE][dest_ip] = 0;
+
+
+        if (!(source_ip in graph_data[timestamp_s])) graph_data[timestamp_s][source_ip] = 0; // what is this for???
 
         graph_data[timestamp_s][TOTAL_THROUGHPUT][key] = graph_data[timestamp_s][TOTAL_THROUGHPUT][key] + total_throughput;
         graph_data[timestamp_s][SEND_THROUGHPUT][source_ip] = graph_data[timestamp_s][SEND_THROUGHPUT][source_ip] + send_throughput;
@@ -346,9 +404,7 @@ float: right;
         graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE][key] = graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE][source_ip] + total_retrans_percentage;
         graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE][source_ip] = graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE][source_ip] + send_retrans_percentage;
         graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE][dest_ip] = graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE][dest_ip] + recv_retrans_percentage;
-
-
-
+        //console.log(graph_data[timestamp_s]);
       });
     }], [function() {
       console.log('Client has connected to the server!');
