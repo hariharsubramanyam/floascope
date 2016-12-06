@@ -50,8 +50,8 @@ class PacketSniffer {
         session.dst_name);
 
       // Update the session whenever we get new data.
-      session.on("data recv", session => counter.updateSession(session));
-      session.on("data send", session => counter.updateSession(session));
+      session.on("data recv", (session, data, dataLength) => counter.updateSession(session, dataLength));
+      session.on("data send", (session, data, dataLength) => counter.updateSession(session, dataLength));
 
       // On retransmit, notify that the counter that a retransmissing (of
       // the given byte length) has occured for the given session.
