@@ -30,7 +30,6 @@ class PacketCounter {
 
     // This maps from "source IP:port - dest IP:port" to the data for that flow.
     this.sessionMap = new Map();
-    this.lastSessionMap = new Map();
 
     // Execute the tick function every interval.
     const that = this;
@@ -53,29 +52,32 @@ class PacketCounter {
     const result = [];
 
     this.sessionMap.forEach( (value, key, map) => {
-      //var value = this.sessionMap[key];
-      var lastValue = this.lastSessionMap[key];
-
       value.time_stamp = (new Date()).getTime();
       value.src_host = this.rdns.lookup(this.stripPort(value.src));
       value.dst_host = this.rdns.lookup(this.stripPort(value.dst));
 
-      value.num_bytes_inst = lastValue ? value.num_bytes - lastValue.num_bytes : value.num_bytes;
-      value.num_send_bytes_inst = lastValue ? value.num_send_bytes - lastValue.num_send_bytes : value.num_send_bytes;
-      value.num_recv_bytes_inst = lastValue ? value.num_recv_bytes - lastValue.num_recv_bytes : value.num_recv_bytes;
-      value.num_retrans_bytes_inst = lastValue ? value.retransmit_bytes - lastValue.retransmit_bytes : value.retransmit_bytes;
-      value.num_send_retrans_bytes_inst = lastValue ? value.send_retransmit_bytes - lastValue.send_retransmit_bytes : value.send_retransmit_bytes;
-      value.num_recv_retrans_bytes_inst = lastValue ? value.recv_retransmit_bytes - lastValue.recv_retransmit_bytes : value.recv_retransmit_bytes;
+      value.num_retrans_bytes_inst = value.num_send_retrans_bytes_inst +
+        value.num_recv_retrans_bytes_inst;
 
+      value.num_bytes_inst = value.num_send_bytes_inst + 
+        value.num_recv_bytes_inst;
 
-      if (value.num_bytes > 0) {
+      if (value.num_bytes_inst > 0) {
         result.push(value);
       }
-    })
-    this.lastSessionMap = new Map(this.sessionMap);
+    });
+
     this.onTick(result);
+    this.clear();
 
     //this.sessionMap.forEach(v => v.num_bytes = 0);
+  }
+
+  clear() {
+    const that = this;
+    this.sessionMap.forEach( (value, key) => {
+      that.sessionMap.set(key, that.extractData(value.session));
+    });
   }
 
   stripPort(ipAndPort) {
@@ -109,52 +111,31 @@ class PacketCounter {
    * Update the session map with the content of this session.
    * The session comes from the PacketSniffer.
    */
-  updateSession(session) {
-    const that = this;
-    this.upsert(
-      session,
-      data => {
-// //        Calculate instantaneous values based on last interval information
-        // data.num_bytes_inst = session.send_bytes_payload +
-        //   session.recv_bytes_payload - data.num_bytes;
-        // data.num_recv_bytes_inst = session.recv_bytes_payload - data.num_recv_bytes;
-        // data.num_send_bytes_inst = session.send_bytes_payload - data.num_send_bytes;
+  updateSession(session, dataLength, sendOrRecv) {
+    const data = this.extractData(session);
 
-        data.num_send_bytes = session.send_bytes_payload;
-        data.num_recv_bytes = session.recv_bytes_payload;
-        data.num_bytes = session.send_bytes_payload + session.recv_bytes_payload;
-        return data;
-      },
-      () => {
-        return that.extractData(session);
-      }
-    );
+    const updateData = (data) => {
+      const isSend = (sendOrRecv === "send");
+      data.num_send_bytes_inst += (isSend) ? dataLength : 0;
+      data.num_recv_bytes_inst += (isSend) ? 0 : dataLength;
+      return data;
+    };
+
+    this.upsert(session, updateData, () => updateData(data));
   }
 
-  retransmit(session, len, sendOrRecv) {
-    const that = this;
-    console.log(sendOrRecv);
-    this.upsert(
-      session,
-      data => {
-        if (sendOrRecv === "send"){
-          data.send_retransmit_bytes += len;
-        }
-        else{
-          data.recv_retransmit_bytes += len;
-        }
+  retransmit(session, dataLength, sendOrRecv) {
+    const data = this.extractData(session);
 
-        data.num_retransmits++;
-        data.retransmit_bytes += len;
-        return data;
-      },
-      () => {
-        const data = that.extractData(session);
-        data.num_retransmits++;
-        data.retransmit_bytes += len;
-        return data;
-      }
-    );
+    const updateData = (data) => {
+      const isSend = (sendOrRecv === "send");
+      data.num_send_retrans_bytes_inst += isSend ? dataLength : 0;
+      data.num_recv_retrans_bytes_inst += isSend ? 0 : dataLength;
+      data.num_retransmits++;
+      return data;
+    };
+
+    this.upsert(session, updateData, () => updateData(data));
   }
 
   extractData(session) {
@@ -164,9 +145,6 @@ class PacketCounter {
       "dst": session.dst_name,
       "src_host": null,
       "dst_host": null,
-      "num_bytes": session.recv_bytes_payload + session.send_bytes_payload,
-      "num_recv_bytes": session.recv_bytes_payload,
-      "num_send_bytes": session.send_bytes_payload,
 
       "num_bytes_inst" : 0,
       "num_send_bytes_inst" : 0,
@@ -178,9 +156,8 @@ class PacketCounter {
 
       "interval": this.interval,
       "num_retransmits": 0,
-      "retransmit_bytes": 0,
-      "send_retransmit_bytes" : 0,
-      "recv_retransmit_bytes" : 0
+
+      "session": session
     };
   }
 

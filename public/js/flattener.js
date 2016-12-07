@@ -4,13 +4,13 @@
  * It will then strip port numbers and merge sessions accordingly.
  * For example, if the array is:
  * [
- *  {src: "A:1", dst: "B:2", num_bytes: 3},
- *  {src: "A:2", dst: "B:3", num_bytes: 4}
+ *  {src: "A:1", dst: "B:2", num_bytes_inst: 3},
+ *  {src: "A:2", dst: "B:3", num_bytes_inst: 4}
  * ]
  *
  * Then the returned array is:
  * [
- *  {src: "A", dst: "B", num_bytes: 7}
+ *  {src: "A", dst: "B", num_bytes_inst: 7}
  * ]
  */
 (function() {
@@ -47,11 +47,11 @@
    * (newData).
    */
   var update = function(currentData, newData) {
-    currentData.num_bytes += newData.num_bytes;
-    currentData.num_recv_bytes += newData.num_recv_bytes;
-    currentData.num_send_bytes += newData.num_send_bytes;
+    currentData.num_bytes_inst += newData.num_bytes_inst;
+    currentData.num_recv_bytes += newData.num_recv_bytes_inst;
+    currentData.num_send_bytes += newData.num_send_bytes_inst;
     currentData.num_retransmits += newData.num_retransmits;
-    currentData.retransmit_bytes += newData.retransmit_bytes;
+    currentData.retransmit_bytes += newData.num_retrans_bytes_inst;
   };
 
   Flatten = function(data) {

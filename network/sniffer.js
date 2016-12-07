@@ -44,14 +44,16 @@ class PacketSniffer {
 
     // Set up the TCP tracker.
     this.tcp_tracker.on("session", session => {
+      counter.updateSession(session, 0, "recv");
       // Indicate that a new session has occured.
-      counter.updateSession(session);
       console.log("Start of session between: " + session.src_name + " and " +
         session.dst_name);
 
       // Update the session whenever we get new data.
-      session.on("data recv", (session, data, dataLength) => counter.updateSession(session, dataLength));
-      session.on("data send", (session, data, dataLength) => counter.updateSession(session, dataLength));
+      session.on("data recv", (session, data, dataLength) => 
+        counter.updateSession(session, dataLength, "recv"));
+      session.on("data send", (session, data, dataLength) => 
+        counter.updateSession(session, dataLength, "send"));
 
       // On retransmit, notify that the counter that a retransmissing (of
       // the given byte length) has occured for the given session.

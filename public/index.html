@@ -34,7 +34,7 @@
           .map(function(obj) {
             var realSrc = obj.src_host || obj.src;
             var realDst = obj.dst_host || obj.dst;
-            return [realSrc, "" + realDst, obj.num_bytes];
+            return [realSrc, "" + realDst, obj.num_bytes_inst];
           });
         sankey.resetData(rows);
       }], [function() {
