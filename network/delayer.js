@@ -100,8 +100,7 @@ class PacketDelayer {
   /**
    * Add a packet to the delayer.
    */ 
-  add(raw_packet) {
-    const packet = pcap.decode.packet(raw_packet);
+  add(packet) {
     if (this.flushImmediately) {
       this.onPacket(packet);
     } else {

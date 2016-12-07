@@ -89,7 +89,14 @@ class PacketSniffer {
     );
 
     // Whenever we get a new packet, feed it to the delayer.
-    pcap_session.on("packet", raw_packet => delayer.add(raw_packet));
+    pcap_session.on("packet", raw_packet => {
+      try {
+        const packet = pcap.decode.packet(raw_packet);
+        delayer.add(packet);
+      } catch (err) {
+        console.log(err);
+      }
+    });
   }
 }
 
