@@ -15,8 +15,10 @@ class PacketCounter {
    * @param {Boolean} shouldUseReverseDns -
    *  Whether the server should perform reverse DNS lookups of IP addresses.
    * @param {Function} onTick -
-   *  Executed every second with a map from source "IP:port" to the data
-   *  associated with that TCP session.
+   *  Executed every interval milliseconds. It is executed with one argument,
+   *  which is an array of objects (each object represents a TCP connection).
+   *  To see what the objects look like, see the extractData() function in 
+   *  this class.
    */
   constructor(interval, shouldUseReverseDns, onTick) {
     // If we shouldn't do reverse DNS, just replace the ReverseDNS with a
@@ -94,7 +96,11 @@ class PacketCounter {
    * It simply returns: srcIP:srcPort-dstIP:dstPort.
    */
   key(session) {
-    return session.src_name + "-" + session.dst_name;
+    const src = (session.src_name <= session.dst_name) ? session.src_name :
+      session.dst_name;
+    const dst = (session.src_name <= session.dst_name) ? session.dst_name :
+      session.src_name;
+    return src + "-" + dst;
   }
 
   upsert(session, updateFn, insertFn) {
@@ -140,23 +146,52 @@ class PacketCounter {
 
   extractData(session) {
     return {
+      // The unique key identifying this TCP connection.
       "key": this.key(session),
-      "src": session.src_name,
-      "dst": session.dst_name,
+
+      // The source IP:port address of the connection. The source address appears
+      // lexicographically before the destination address.
+      "src": (session.src_name <= session.dst_name) ? session.src_name : session.dst_name,
+
+      // The destination IP:port address of the connection. The destination address
+      // appears lexicographically before the destination address.
+      "dst": (session.src_name < session.dst_name) ? session.dst_name : session.src_name,
+
+      // The hostname (via reverse DNS lookup) of the source address. If the hostname
+      // is unknown, then this will be null.
       "src_host": null,
+
+      // The hostname (via reverse DNS lookup) of the destination address. If the hostname
+      // is unknown, then this will be null.
       "dst_host": null,
 
+      // The total number of bytes exchanged in the connection in the last interval.
       "num_bytes_inst" : 0,
+
+      // The total number of bytes send by the src in the last interval.
       "num_send_bytes_inst" : 0,
+
+      // The total number of bytes received by the src in the last interval.
       "num_recv_bytes_inst" : 0,
 
+      // The total number of bytes retransmitted in the last interval.
       "num_retrans_bytes_inst" : 0,
+
+      // The total number of bytes retransmitted by the src in the last interval.
       "num_send_retrans_bytes_inst" : 0,
+
+      // The total number of bytes retransmitted by the dst in the last interval.
       "num_recv_retrans_bytes_inst" : 0,
 
+      // The number of milliseconds over which the above values are computed
+      // and sent to the client.
       "interval": this.interval,
+
+      // The number of retransmissions that occured within the last interval.
       "num_retransmits": 0,
 
+      // The underlying TCPSession (which should be called a TCP connection, if
+      // we want to be accurate with name).
       "session": session
     };
   }

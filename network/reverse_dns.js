@@ -9,8 +9,8 @@ class ReverseDns {
   }
 
   /**
-   * If there's no hostname, then null will be returned and a lookup for the
-   * hostname will be performed.
+   * If there's no hostname, then null will be returned and a lookup will be
+   * performed if the name has not already been looked up.
    */
   lookup(ip) {
     if (this.hostNameForIP.has(ip)) {
@@ -21,7 +21,7 @@ class ReverseDns {
         if (hostnames && hostnames.length > 0) {
           that.hostNameForIP.set(ip, hostnames[0]);
         } else {
-          that.hostNameForIP.set(ip, ip);
+          that.hostNameForIP.set(ip, null);
         }
       });
       return null;
