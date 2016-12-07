@@ -14,6 +14,8 @@
    * Create a Sankey diagram.
    * @param {String} divId - The ID of the div that should contain the Sankey
    *  diagram.
+   * @param {Number} interval - The number of milliseconds that each pipe
+   *  is allowed to be displayed without being updated until it is removed.
    * @param {Array[Array of form [String, String, Number]]} data - The data
    *  should be given as a matrix (an Array of Arrays). Each inner Array 
    *  represents a row, and each row has three columns. The first column is
@@ -26,7 +28,7 @@
    * @param {Function} callback - To be executed after chart is drawn. It will
    *  be given the returned Sankey object as an argument.
    */
-  Sankey = function(divId, data, options, callback) {
+  Sankey = function(divId, interval, data, options, callback) {
     google.charts.setOnLoadCallback(function() {
       // Default options if not defined.
       options = options || {};
@@ -38,21 +40,27 @@
       options.sankey = options.sankey || {};
       options.sankey.iterations = options.sankey.iterations || 0;
 
-      // Create data.
-      var dataTable = new google.visualization.DataTable();
-      dataTable.addColumn("string", "From");
-      dataTable.addColumn("string", "To");
-      dataTable.addColumn("number", "Weight");
-      dataTable.addRows(data);
+      // Create DataTable.
+      var createDataTable = function(data) {
+        var dataTable = new google.visualization.DataTable();
+        dataTable.addColumn("string", "From");
+        dataTable.addColumn("string", "To");
+        dataTable.addColumn("number", "Weight");
+        dataTable.addRows(data);
+        return dataTable;
+      };
+      var dataTable = createDataTable(data);
 
-      // Create a mapping from (From, To) to row number.
-      var rowForFlow = {};
+      // Create a mapping from (From, To) to timestamp that
+      // it was last updated.
+      var timestampForFlow = {};
+
       var constructKey = function(row) {
         return row[0] + ", " + row[1];
       };
       data.forEach(function(row, rowIndex) {
         var key = constructKey(row);
-        rowForFlow[key] = rowIndex;
+        timestampForFlow[key] = that.now();
       });
 
       // Draw the chart.
@@ -68,6 +76,14 @@
        */
       that.redraw = function() {
         chart.draw(dataTable, options);
+      };
+
+      /**
+       * Get the current time.
+       */
+      that.now = function() {
+        var dt = new Date();
+        return dt.getTime();
       };
 
       /**
@@ -102,20 +118,46 @@
        *  for Sankey.
        */
       that.updateData = function(additionalData) {
-        // Add the rows that aren't being overwritten.
-        dataTable.addRows(additionalData.filter(function(row) {
-          return rowForFlow[constructKey(row)] === undefined;
-        }));
+        // Update the timestamps.
+        additionalData.forEach(function(row) {
+          timestampForFlow[constructKey(row)] = that.now();
+        });
 
+        // Make a newData array with the current data..
+        var rowForFlow = {};
+        var newData = data.map(function(row, rowIndex) { 
+          rowForFlow[constructKey(row)] = rowIndex;
+          return row; 
+        });
 
-        // Overwrite already existing rows.
+        // Update the data that is being overwritten.
         additionalData.filter(function(row) {
           return rowForFlow[constructKey(row)] !== undefined;
-        }).map(function(row) {
-          return [rowForFlow[constructKey(row)], row[2]];
-        }).map(function(indexWeightPair) {
-          dataTable.setCell(indexWeightPair[0], 2, indexWeightPair[1]);
+        }).forEach(function(row) {
+          var rowIndex = rowForFlow[constructKey(row)];
+          newData[rowIndex] = row;
         });
+
+        // Append the data that is new.
+        additionalData.filter(function(row) {
+          return rowForFlow[constructKey(row)] === undefined;
+        }).forEach(function(row) {
+          rowForFlow[constructKey(row)] = newData.length;
+          newData.push(row);
+        });
+
+        // Remove old data.
+        var removeTheseKeys = Object.keys(rowForFlow).filter(function(key) {
+          return timestampForFlow[key] + interval < that.now();
+        });
+        removeTheseKeys.forEach(function(key) {
+          delete timestampForFlow[key];
+        });
+        data = newData.filter(function(row) {
+          return removeTheseKeys.indexOf(constructKey(row)) === -1;
+        });
+
+        dataTable = createDataTable(data);
         that.redraw();
       };
 

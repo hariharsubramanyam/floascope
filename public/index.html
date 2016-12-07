@@ -24,7 +24,7 @@
     var prefixUI = PrefixUI("prefix_ui");
 
     // Draw the Sankey diagram.
-    Sankey("sankey_basic", data, {}, function(sankey) {
+    Sankey("sankey_basic", 7000, data, {}, function(sankey) {
       var ws = WebsocketHelper([function(data) {
         data = Flatten(data);
         var rows = data.filter(function(obj) {
@@ -36,7 +36,7 @@
             var realDst = obj.dst_host || obj.dst;
             return [realSrc, "" + realDst, obj.num_bytes_inst];
           });
-        sankey.resetData(rows);
+        sankey.updateData(rows);
       }], [function() {
         console.log('Client has connected to the server!');
         ws.sendMessage({"message": "Hi there"});
