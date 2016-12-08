@@ -1,0 +1,354 @@
+<!doctype html>
+<head>
+	<link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css">
+	<link type="text/css" rel="stylesheet" href="../css/vendor/rickshaw/graph.css">
+	<link type="text/css" rel="stylesheet" href="../css/vendor/rickshaw/detail.css">
+	<link type="text/css" rel="stylesheet" href="../css/vendor/rickshaw/legend.css">
+	<link type="text/css" rel="stylesheet" href="../css/vendor/extensions.css?v=2">
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+	<script>
+		jQuery.noConflict();
+	</script>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js"></script>
+
+	<script src="../js/vendor/rickshaw/Rickshaw.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Class.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Compat.ClassList.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.Renderer.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.Renderer.Area.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.Renderer.Line.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.Renderer.Bar.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.Renderer.ScatterPlot.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.Renderer.Stack.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.RangeSlider.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.RangeSlider.Preview.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.HoverDetail.js"></script>
+	<!-- <script src="../js/vendor/rickshaw/Rickshaw.Graph.Annotate.js"></script> -->
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.Legend.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.Axis.Time.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.Behavior.Series.Toggle.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.Behavior.Series.Order.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.Behavior.Series.Highlight.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.Smoother.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Fixtures.Time.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Fixtures.Time.Local.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Fixtures.Number.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Fixtures.RandomData.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Fixtures.Color.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Color.Palette.js"></script>
+	<script src="../js/vendor/rickshaw/Rickshaw.Graph.Axis.Y.js"></script>
+
+	<script src="../js/vendor/extensions.js"></script>
+
+
+	<!-- from original timeseries.html -->
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.runtime.min.js"></script>
+	<script src="/js/templates.js"></script>
+
+	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+	<script src="../js/websocket_helper.js"></script>
+	<script src="../js/flattener.js"></script>
+
+	<link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.6.0/rickshaw.min.css">
+	<script src="/js/prefix_filter.js"></script>
+	<script src="/js/ui/prefix_ui.js"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+	<script src="/js/vendor/d3.layout.js"></script> 
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.6.0/rickshaw.min.js"></script>
+	<!--<script src="../js/timeseries.js"></script>-->
+
+
+</head>
+<body>
+
+<div id="content">
+
+	<form id="side_panel">
+		<h1>Floascope</h1>
+		<section><div id="legend"></div></section>
+		<section>
+			<div id="renderer_form" class="toggler">
+				<input type="radio" name="renderer" id="area" value="area" checked>
+				<label for="area">area</label>
+				<input type="radio" name="renderer" id="bar" value="bar">
+				<label for="bar">bar</label>
+				<input type="radio" name="renderer" id="line" value="line">
+				<label for="line">line</label>
+				<input type="radio" name="renderer" id="scatter" value="scatterplot">
+				<label for="scatter">scatter</label>
+			</div>
+		</section>
+		<section>
+			<div id="offset_form">
+				<label for="stack">
+					<input type="radio" name="offset" id="stack" value="zero" checked>
+					<span>stack</span>
+				</label>
+				<label for="stream">
+					<input type="radio" name="offset" id="stream" value="wiggle">
+					<span>stream</span>
+				</label>
+				<label for="pct">
+					<input type="radio" name="offset" id="pct" value="expand">
+					<span>pct</span>
+				</label>
+				<label for="value">
+					<input type="radio" name="offset" id="value" value="value">
+					<span>value</span>
+				</label>
+			</div>
+			<div id="interpolation_form">
+				<label for="cardinal">
+					<input type="radio" name="interpolation" id="cardinal" value="cardinal" checked>
+					<span>cardinal</span>
+				</label>
+				<label for="linear">
+					<input type="radio" name="interpolation" id="linear" value="linear">
+					<span>linear</span>
+				</label>
+				<label for="step">
+					<input type="radio" name="interpolation" id="step" value="step-after">
+					<span>step</span>
+				</label>
+			</div>
+		</section>
+		<section>
+			<h6>Smoothing</h6>
+			<div id="smoother"></div>
+		</section>
+		<section></section>
+	</form>
+
+	<div id="chart_container">
+		<div id="chart"></div>
+		<div id="timeline"></div>
+		<div id="preview"></div>
+	</div>
+
+</div>
+
+<script>
+
+// set up our data series with 150 random data points
+
+var seriesData = [ [], [], [], [], [], [], [], [], [] ];
+var random = new Rickshaw.Fixtures.RandomData(150);
+
+for (var i = 0; i < 150; i++) {
+	random.addData(seriesData);
+}
+
+// var palette = new Rickshaw.Color.Palette( { scheme: 'classic9' } );
+
+
+// START OUR CODE
+// instantiate our graph!
+var tv = 1000; // ms
+// instantiate
+var graph = new Rickshaw.Graph( {
+	element: document.getElementById("chart"),
+	width: 900,
+	height: 500,  
+	renderer: 'line',
+	stroke: true,
+	preserve: true,
+	series: new Rickshaw.Series.FixedDuration([{ name: 'zero' }], undefined, {
+		timeInterval: tv,
+		maxDataPoints: 60*1000/tv, // show a minute of data
+		timeBase: new Date().getTime()/1000 // s
+	})
+} );
+
+graph.render();
+// END OUR CODE
+
+
+var preview = new Rickshaw.Graph.RangeSlider( {
+	graph: graph,
+	element: document.getElementById('preview'),
+} );
+
+var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+	graph: graph,
+	xFormatter: function(x) {
+		return new Date(x * 1000).toString();
+	}
+} );
+
+var legend = new Rickshaw.Graph.Legend( {
+	graph: graph,
+	element: document.getElementById('legend')
+
+} );
+
+var shelving = new Rickshaw.Graph.Behavior.Series.Toggle( {
+	graph: graph,
+	legend: legend
+} );
+
+var order = new Rickshaw.Graph.Behavior.Series.Order( {
+	graph: graph,
+	legend: legend
+} );
+
+var highlighter = new Rickshaw.Graph.Behavior.Series.Highlight( {
+	graph: graph,
+	legend: legend
+} );
+
+var smoother = new Rickshaw.Graph.Smoother( {
+	graph: graph,
+	element: document.querySelector('#smoother')
+} );
+
+var ticksTreatment = 'glow';
+
+var xAxis = new Rickshaw.Graph.Axis.Time( {
+	graph: graph,
+	ticksTreatment: ticksTreatment,
+	timeFixture: new Rickshaw.Fixtures.Time.Local()
+} );
+
+xAxis.render();
+
+var yAxis = new Rickshaw.Graph.Axis.Y( {
+	graph: graph,
+	orientation: 'left',
+	tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+	ticksTreatment: ticksTreatment
+} );
+
+yAxis.render();
+
+var controls = new RenderControls( {
+	element: document.querySelector('form'),
+	graph: graph
+} );
+
+// add some data every so often
+
+var messages = [
+	"Changed home page welcome message",
+	"Minified JS and CSS",
+	"Changed button color from blue to green",
+	"Refactored SQL query to use indexed columns",
+	"Added additional logging for debugging",
+	"Fixed typo",
+	"Rewrite conditional logic for clarity",
+	"Added documentation for new methods"
+];
+
+setInterval( function() {
+	random.removeData(seriesData);
+	random.addData(seriesData);
+	graph.update();
+
+}, 3000 );
+
+var previewXAxis = new Rickshaw.Graph.Axis.Time({
+	graph: preview.previews[0],
+	timeFixture: new Rickshaw.Fixtures.Time.Local(),
+	ticksTreatment: ticksTreatment
+});
+
+previewXAxis.render();
+
+
+
+
+
+//////////////////// START OUR CODE
+// CHECK - IS WEBSOCKET WORKING?
+
+
+var calculateThroughput = function(bytes, interval) {
+  return bytes/interval * 1000 || 0; //Throughput in #bytes/ms; return 0 if anything is null
+};
+
+// update graph
+var graph_data = {};
+var iv = setInterval( function() {
+  for (var i in Object.keys(graph_data)) {
+    var timestamp_s = Object.keys(graph_data)[i];
+
+    for (var j in Object.keys(graph_data[timestamp_s])) {
+      //graph_data_accumulator[j].push([graph_data[timestamp_s][j], timestamp_s]);
+    }
+    graph.series.addData(graph_data[timestamp_s][current_graph], timestamp_s); // second granularity, for smoothness
+    //console.log(graph_data[timestamp_s][current_graph]);
+
+  }
+  if (!paused) graph.render();
+  graph_data = {};
+}, tv );
+
+var ws = WebsocketHelper([function(data) {
+  data = Flatten(data);
+  data.filter(function(obj) {
+    return prefixUI.filter().matchesFilter(obj.src)
+      || prefixUI.filter().matchesFilter(obj.dst);
+  }).forEach(function(obj) {
+
+    var source_ip = obj.src_host || obj.src;
+    var dest_ip = obj.dst_host || obj.dst;
+    var key = source_ip + "->" + dest_ip; // doing this since obj.key includes port numbers
+
+
+    var timestamp_s = obj.time_stamp / 1000;
+    var total_throughput = calculateThroughput(obj["num_bytes_inst"],obj["interval"]); // num_bytes_inst
+    var send_throughput = calculateThroughput(obj["num_send_bytes_inst"], obj["interval"]);
+    var recv_throughput = calculateThroughput(obj["num_recv_bytes_inst"], obj["interval"]);
+
+    var total_retrans_percentage = obj["num_retrans_bytes_inst"]/obj["num_bytes_inst"] * 100 || 0;
+    var send_retrans_percentage = obj["send_retrans_bytes_inst"]/obj["num_send_bytes_inst"] * 100 || 0;
+    var recv_retrans_percentage = obj["recv_retrans_bytes_inst"]/obj["num_recv_bytes_inst"] * 100 || 0;
+
+    if (!(timestamp_s in graph_data)) graph_data[timestamp_s] = {};
+
+    if (!(TOTAL_THROUGHPUT in graph_data[timestamp_s])) graph_data[timestamp_s][TOTAL_THROUGHPUT] = {};
+    if (!(key in graph_data[timestamp_s][TOTAL_THROUGHPUT])) graph_data[timestamp_s][TOTAL_THROUGHPUT][key] = 0;
+
+    if (!(SEND_THROUGHPUT in graph_data[timestamp_s])) graph_data[timestamp_s][SEND_THROUGHPUT] = {};          
+    if (!(source_ip in graph_data[timestamp_s][SEND_THROUGHPUT])) graph_data[timestamp_s][SEND_THROUGHPUT][source_ip] = 0;
+
+    if (!(RECV_THROUGHPUT in graph_data[timestamp_s])) graph_data[timestamp_s][RECV_THROUGHPUT] = {};          
+    if (!(dest_ip in graph_data[timestamp_s][RECV_THROUGHPUT])) graph_data[timestamp_s][RECV_THROUGHPUT][dest_ip] = 0;
+
+    if (!(TOTAL_RETRANS_PERCENTAGE in graph_data[timestamp_s])) graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE] = {};
+    if (!(key in graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE])) graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE][key] = 0;
+
+    if (!(SEND_RETRANS_PERCENTAGE in graph_data[timestamp_s])) graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE] = {};
+    if (!(source_ip in graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE])) graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE][source_ip] = 0;
+
+    if (!(RECV_RETRANS_PERCENTAGE in graph_data[timestamp_s])) graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE] = {};
+    if (!(dest_ip in graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE])) graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE][dest_ip] = 0;
+
+
+    //if (!(source_ip in graph_data[timestamp_s])) graph_data[timestamp_s][source_ip] = 0; // what is this for???
+
+    graph_data[timestamp_s][TOTAL_THROUGHPUT][key] += total_throughput;
+    graph_data[timestamp_s][SEND_THROUGHPUT][source_ip] += send_throughput;
+    graph_data[timestamp_s][RECV_THROUGHPUT][dest_ip] += recv_throughput;
+    graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE][key] += total_retrans_percentage;
+    graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE][source_ip] += send_retrans_percentage;
+    graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE][dest_ip] += recv_retrans_percentage;
+    console.log(graph_data[timestamp_s]);
+  });
+}], [function() {
+  console.log('Client has connected to the server!');
+  ws.sendMessage({"message": "Hi there"});
+}], [function() {
+  console.log('The client has disconnected!');
+}]);
+
+
+
+
+</script>
+
+</body>
