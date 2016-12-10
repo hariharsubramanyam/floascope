@@ -120,8 +120,11 @@ const setupSocketIo = server => {
     socket.on('disconnect', () => {
       console.log('user disconnected');
     });
-    socket.on('vis_request', function(msg){
-      console.log('message: ' + JSON.stringify(msg));
+    socket.on('vis_request', (msg) => {
+      console.log('Got message: ' + JSON.stringify(msg));
+      if (msg.msg_type === "updateInterval") {
+        counter.setInterval(msg.interval);
+      }
     });
   });
 

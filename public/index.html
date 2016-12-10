@@ -39,7 +39,6 @@
         sankey.updateData(rows);
       }], [function() {
         console.log('Client has connected to the server!');
-        ws.sendMessage({"message": "Hi there"});
       }], [function() {
         console.log('The client has disconnected!');
       }]);

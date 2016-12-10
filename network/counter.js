@@ -35,7 +35,20 @@ class PacketCounter {
 
     // Execute the tick function every interval.
     const that = this;
-    setInterval(() => that.tick(), interval);
+    this.ticker = setInterval(() => that.tick(), interval);
+  }
+
+  setInterval(interval) {
+    // Clear the existing ticker.
+    clearInterval(this.ticker);
+
+    // Discard any data that was buffered, because the interval has changed.
+    this.clear();
+
+    // Update the interval.
+    this.interval = interval;
+    const that = this;
+    this.ticker = setInterval(() => that.tick(), interval);
   }
 
   /**

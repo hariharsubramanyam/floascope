@@ -53,6 +53,17 @@
     var that = Object.create(WebsocketHelper.prototype);
 
     /**
+     * Update the interval at which the server sends messages
+     * to the client.
+     */
+    that.sendUpdateIntervalMessage = function(desiredInterval) {
+      that.sendMessage({
+        "msg_type": "updateInterval",
+        "interval": desiredInterval
+      });
+    };
+
+    /**
      * Send a message to the server.
      * @param {Object} message - The JSON data to send to the server.
      */
