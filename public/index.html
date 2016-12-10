@@ -14,11 +14,13 @@
   <script src="/js/sankey.js"></script>
   <script src="/js/prefix_filter.js"></script>
   <script src="/js/ui/prefix_ui.js"></script>
+  <script src="/js/ui/interval_ui.js"></script>
 </head>
 <body>
   <div id="sankey_basic" style="width: 900px; height: 900px;"></div>
   <p>Sankey Diagram Demo</p>
   <div id="prefix_ui"></div>
+  <div id="interval_ui"></div>
   <script> 
     var data = [];
     var prefixUI = PrefixUI("prefix_ui");
@@ -42,6 +44,7 @@
       }], [function() {
         console.log('The client has disconnected!');
       }]);
+      var intervalUI = IntervalUI("interval_ui", ws);
     });
   </script>
 </body>

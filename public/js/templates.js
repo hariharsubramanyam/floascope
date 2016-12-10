@@ -1,5 +1,8 @@
 (function() {
   var template = Handlebars.template, templates = Handlebars.templates = Handlebars.templates || {};
+templates['interval_ui_input'] = template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
+    return "<input class=\"interval-ui-input\" type=\"text\" placeholder=\"Interval (millseconds)\"/>\n<button class=\"interval-ui-button\">Set Visualization Update Interval</button>\n";
+},"useData":true});
 templates['prefix_ui_input'] = template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
     return "<input class=\"prefix-ui-input\" type=\"text\" placeholder=\"IP prefix (e.g. 18, 18.2)\"/>\n<button class=\"prefix-ui-button\">Add Prefix</button>\n";
 },"useData":true});
