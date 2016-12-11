@@ -131,23 +131,31 @@
 	</div>
 
 </div>
-
+N
 <script>
 
 // set up our data series with 150 random data points
 
-var seriesData = [ [], [], [], [], [], [], [], [], [] ];
-var random = new Rickshaw.Fixtures.RandomData(150);
-
-for (var i = 0; i < 150; i++) {
-	random.addData(seriesData);
-}
+// var seriesData = [ [], [], [], [], [], [], [], [], [] ];
+// var random = new Rickshaw.Fixtures.RandomData(150);
+//
+// for (var i = 0; i < 150; i++) {
+// 	random.addData(seriesData);
+// }
 
 // var palette = new Rickshaw.Color.Palette( { scheme: 'classic9' } );
 
 console.log("before graph render");
 
 // START OUR CODE
+
+const TOTAL_THROUGHPUT = "total_throughput";
+const SEND_THROUGHPUT = "send_throughput";
+const RECV_THROUGHPUT = "recv_throughput";
+const TOTAL_RETRANS_PERCENTAGE = "total_retransmit_perc";
+const SEND_RETRANS_PERCENTAGE = "send_retransmit_perc";
+const RECV_RETRANS_PERCENTAGE = "recv_retransmit_perc";
+var current_graph = TOTAL_THROUGHPUT;
 // instantiate our graph!
 var tv = 1000; // ms
 // instantiate
@@ -250,11 +258,11 @@ var messages = [
 ];
 
 setInterval( function() {
-	random.removeData(seriesData);
-	random.addData(seriesData);
+	// random.removeData(seriesData);
+	// random.addData(seriesData);
 	graph.update();
 
-}, 3000 );
+}, tv );
 
 console.log("after setInterval render");
 
@@ -293,14 +301,64 @@ var iv = setInterval( function() {
     //console.log(graph_data[timestamp_s][current_graph]);
 
   }
-  if (!paused) graph.render();
+  graph.render();
   graph_data = {};
 }, tv );
 
 var ws = WebsocketHelper([function(data) {
   data = Flatten(data);
-	ws.sendMessage({"message" : "We're in the message handler"});
+	console.log({"message" : "We're in the message handler"});
 
+	data.filter(function(obj) {
+		return obj
+	}).forEach(function(obj) {
+
+		var source_ip = obj.src_host || obj.src;
+		var dest_ip = obj.dst_host || obj.dst;
+		var key = source_ip + "->" + dest_ip; // doing this since obj.key includes port numbers
+
+
+		var timestamp_s = obj.time_stamp / 1000;
+		var total_throughput = calculateThroughput(obj["num_bytes_inst"],obj["interval"]); // num_bytes_inst
+		// var send_throughput = calculateThroughput(obj["num_send_bytes_inst"], obj["interval"]);
+		// var recv_throughput = calculateThroughput(obj["num_recv_bytes_inst"], obj["interval"]);
+		//
+		// var total_retrans_percentage = obj["num_retrans_bytes_inst"]/obj["num_bytes_inst"] * 100 || 0;
+		// var send_retrans_percentage = obj["send_retrans_bytes_inst"]/obj["num_send_bytes_inst"] * 100 || 0;
+		// var recv_retrans_percentage = obj["recv_retrans_bytes_inst"]/obj["num_recv_bytes_inst"] * 100 || 0;
+
+		if (!(timestamp_s in graph_data)) graph_data[timestamp_s] = {};
+
+
+		if (!(TOTAL_THROUGHPUT in graph_data[timestamp_s])) graph_data[timestamp_s][TOTAL_THROUGHPUT] = {};
+		if (!(key in graph_data[timestamp_s][TOTAL_THROUGHPUT])) graph_data[timestamp_s][TOTAL_THROUGHPUT][key] = 0;
+		//
+		// if (!(SEND_THROUGHPUT in graph_data[timestamp_s])) graph_data[timestamp_s][SEND_THROUGHPUT] = {};
+		// if (!(source_ip in graph_data[timestamp_s][SEND_THROUGHPUT])) graph_data[timestamp_s][SEND_THROUGHPUT][source_ip] = 0;
+		//
+		// if (!(RECV_THROUGHPUT in graph_data[timestamp_s])) graph_data[timestamp_s][RECV_THROUGHPUT] = {};
+		// if (!(dest_ip in graph_data[timestamp_s][RECV_THROUGHPUT])) graph_data[timestamp_s][RECV_THROUGHPUT][dest_ip] = 0;
+		//
+		// if (!(TOTAL_RETRANS_PERCENTAGE in graph_data[timestamp_s])) graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE] = {};
+		// if (!(key in graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE])) graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE][key] = 0;
+		//
+		// if (!(SEND_RETRANS_PERCENTAGE in graph_data[timestamp_s])) graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE] = {};
+		// if (!(source_ip in graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE])) graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE][source_ip] = 0;
+		//
+		// if (!(RECV_RETRANS_PERCENTAGE in graph_data[timestamp_s])) graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE] = {};
+		// if (!(dest_ip in graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE])) graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE][dest_ip] = 0;
+		//
+
+		//if (!(source_ip in graph_data[timestamp_s])) graph_data[timestamp_s][source_ip] = 0; // what is this for???
+
+		graph_data[timestamp_s][TOTAL_THROUGHPUT][key] += total_throughput;
+		// graph_data[timestamp_s][SEND_THROUGHPUT][source_ip] += send_throughput;
+		// graph_data[timestamp_s][RECV_THROUGHPUT][dest_ip] += recv_throughput;
+		// graph_data[timestamp_s][TOTAL_RETRANS_PERCENTAGE][key] += total_retrans_percentage;
+		// graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE][source_ip] += send_retrans_percentage;
+		// graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE][dest_ip] += recv_retrans_percentage;
+		console.log(graph_data[timestamp_s]);
+	});
 }], [function() {
   console.log('Client has connected to the server!');
   ws.sendMessage({"message": "We're in the connect handler"});
