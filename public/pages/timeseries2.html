@@ -72,6 +72,9 @@
 
 	<form id="side_panel">
 		<h1>Floascope</h1>
+		<h2 id="yAxisLabel">Throughput (bytes/s) </h2>
+		<h2>vs.</h2>
+		<h2 id="xAxisLabel">Time (s)</h2>
 		<section><div id="legend"></div></section>
 		<section>
 			<div id="renderer_form" class="toggler">
@@ -138,6 +141,13 @@
 console.log("before graph render");
 
 // START OUR CODE
+
+var setAxesLabels = function(yLabel, xLabel) {
+  xLabel = xLabel || "Time (s)";
+  yLabel = yLabel || "Throughput (bytes/s)";
+  document.getElementById("yAxisLabel").innerHTML = yLabel;
+  document.getElementById("xAxisLabel").innerHTML = xLabel;
+};
 
 // Create a drop-oldest buffer with a 10,000 element capacity. We'll
 // put the server data in this buffer and use buffer.replay(fn) to play back
