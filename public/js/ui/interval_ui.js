@@ -12,16 +12,21 @@
   IntervalUI = function(divId, websocketHelper) {
     var that = Object.create(IntervalUI.prototype);
 
-    // Get jQuery object associated with div.
-    var divJq = $("#" + divId);
+    var divNode = document.getElementById(divId);
 
     // Populate the input fields.
     var inputHtml = Handlebars.templates.interval_ui_input();
-    divJq.html(inputHtml);
+    divNode.innerHTML = inputHtml;
 
+    // Get handles to the input fields.
+    var intervalButton = 
+      document.getElementsByClassName("interval-ui-button")[0];
+    var intervalInput =
+      document.getElementsByClassName("interval-ui-input")[0];
+    
     // Set the handler.
-    divJq.on("click", ".interval-ui-button", function() {
-      var interval = $(".interval-ui-input").val();
+    intervalButton.addEventListener("click", function() {
+      var interval = parseFloat(intervalInput.value);
       websocketHelper.sendUpdateIntervalMessage(parseFloat(interval));
       alert("Set interval to " + interval + " ms");
     });
