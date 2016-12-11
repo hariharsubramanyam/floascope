@@ -5,8 +5,11 @@
 	<link type="text/css" rel="stylesheet" href="../css/vendor/rickshaw/detail.css">
 	<link type="text/css" rel="stylesheet" href="../css/vendor/rickshaw/legend.css">
 	<link type="text/css" rel="stylesheet" href="../css/vendor/extensions.css?v=2">
+  <link type="text/css" rel="stylesheet" href="../css/timeseries_style.css">
 
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.runtime.min.js"></script>
+  <script src="/js/templates.js"></script>
 	<script>
 		jQuery.noConflict();
 	</script>
@@ -56,6 +59,7 @@
 	<link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.6.0/rickshaw.min.css">
 	<script src="/js/prefix_filter.js"></script>
 	<script src="/js/ui/prefix_ui.js"></script>
+	<script src="/js/ui/interval_ui.js"></script>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
 	<script src="/js/vendor/d3.layout.js"></script>
@@ -120,7 +124,7 @@
 	</div>
 
 </div>
-
+<div id="interval_ui"></div>
 <script>
 
 // set up our data series with 150 random data points
@@ -370,8 +374,8 @@ var ws = WebsocketHelper([function(data) {
 }], [function() {
   console.log('The client has disconnected!');
 }]);
+var intervalUI = IntervalUI("interval_ui", ws);
 ws.sendMessage({"message" : "Yes we get this far"});
-
 
 
 
