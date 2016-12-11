@@ -89,7 +89,7 @@
 					<input type="radio" name="offset" id="stack" value="zero" checked>
 					<span>stack</span>
 				</label>
-				<label for="stream">
+				<label for="stream" style="display:none">
 					<input type="radio" name="offset" id="stream" value="wiggle">
 					<span>stream</span>
 				</label>
@@ -111,15 +111,7 @@
 					<input type="radio" name="interpolation" id="linear" value="linear">
 					<span>linear</span>
 				</label>
-				<label for="step">
-					<input type="radio" name="interpolation" id="step" value="step-after">
-					<span>step</span>
-				</label>
 			</div>
-		</section>
-		<section>
-			<h6>Smoothing</h6>
-			<div id="smoother"></div>
 		</section>
 		<section></section>
 	</form>
@@ -163,6 +155,7 @@ var graph = new Rickshaw.Graph( {
 	stroke: true,
 	preserve: true,
 	series: new Rickshaw.Series.FixedDuration([{ name: 'zero' }], undefined, {
+		disabled: true,
 		timeInterval: tv,
 		maxDataPoints: 60*1000/tv, // show a minute of data
 		timeBase: new Date().getTime()/1000 // s
@@ -213,13 +206,12 @@ var highlighter = new Rickshaw.Graph.Behavior.Series.Highlight( {
 var ticksTreatment = 'glow';
 
 var xAxis = new Rickshaw.Graph.Axis.Time( {
-	graph: graph,
+	graph: preview.graph,
 	ticksTreatment: ticksTreatment,
 	timeFixture: new Rickshaw.Fixtures.Time.Local()
 } );
 
 xAxis.render();
-console.log("after x-axis render");
 var logScale = d3.scale.log();
 var linearScale = d3.scale.linear();
 var yAxis = new Rickshaw.Graph.Axis.Y.Scaled( {
@@ -231,39 +223,11 @@ var yAxis = new Rickshaw.Graph.Axis.Y.Scaled( {
 } );
 
 yAxis.render();
-console.log("after y-axis render");
 
 var controls = new RenderControls( {
 	element: document.querySelector('form'),
 	graph: graph
 } );
-
-console.log("after controls render");
-
-// add some data every so often
-
-var messages = [
-	"Changed home page welcome message",
-	"Minified JS and CSS",
-	"Changed button color from blue to green",
-	"Refactored SQL query to use indexed columns",
-	"Added additional logging for debugging",
-	"Fixed typo",
-	"Rewrite conditional logic for clarity",
-	"Added documentation for new methods"
-];
-
-console.log("after setInterval render");
-
-
-// THIS IS THE PROBLEM WITH WEBHANDLER <-- THis piece of code for preview xaxis kills it.
-// var previewXAxis = new Rickshaw.Graph.Axis.Time({
-// 	graph: preview.previews[0],
-// 	timeFixture: new Rickshaw.Fixtures.Time.Local(),
-// 	ticksTreatment: ticksTreatment
-// });
-// previewXAxis.render();
-console.log("after preview x-axis render");
 
 //////////////////// START OUR CODE
 
