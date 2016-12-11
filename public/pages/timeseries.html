@@ -231,6 +231,8 @@ float: right;
             element: document.getElementById('y_axis'),
     } );
 
+
+    // VIEW OPTION STUFF: low priority
     var updateCurrentGraph = function() {
       if (viewMode == 'throughput') {
         if (filterMode == 'all') current_graph = TOTAL_THROUGHPUT;
@@ -272,6 +274,7 @@ float: right;
       }
       graph.render();
     }, false);        
+    // END VIEW OPTION LOW PRIORITY STUFF
 
     // Pause/Play toggle
 
