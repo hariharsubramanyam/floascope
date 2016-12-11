@@ -297,7 +297,7 @@ var ws = WebsocketHelper([function(data) {
 
 		var source_ip = obj.src_host || obj.src;
 		var dest_ip = obj.dst_host || obj.dst;
-		var key = source_ip + "->" + dest_ip; // doing this since obj.key includes port numbers
+    var key = source_ip + "<br>" + dest_ip; // doing this since obj.key includes port numbers
 
 
 		var timestamp_s = obj.time_stamp / 1000;
