@@ -78,9 +78,7 @@ class PacketCounter {
       value.num_bytes_inst = value.num_send_bytes_inst +
         value.num_recv_bytes_inst;
 
-      if (value.num_bytes_inst > 0) {
-        result.push(value);
-      }
+      result.push(value);
     });
 
     this.onTick(result);

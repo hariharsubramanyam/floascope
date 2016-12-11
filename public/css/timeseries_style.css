@@ -1,3 +1,13 @@
 #interval_ui {
   margin-top: 20px;
 }
+
+#side_panel {
+  width: 270px;
+}
+
+h2 {
+	font-family: Franklin Gothic Medium, UnDotum, Helvetica, Arial;
+	font-weight: normal;
+	font-size: 14px;
+}
