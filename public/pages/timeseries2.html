@@ -58,6 +58,7 @@
 
 	<link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.6.0/rickshaw.min.css">
 	<script src="/js/prefix_filter.js"></script>
+	<script src="/js/buffer.js"></script>
 	<script src="/js/ui/prefix_ui.js"></script>
 	<script src="/js/ui/interval_ui.js"></script>
 
@@ -141,6 +142,11 @@
 console.log("before graph render");
 
 // START OUR CODE
+
+// Create a drop-oldest buffer with a 10,000 element capacity. We'll
+// put the server data in this buffer and use buffer.replay(fn) to play back
+// the server data when switching series.
+var buffer = ItemBuffer(10000);
 
 const TOTAL_THROUGHPUT = "total_throughput";
 const SEND_THROUGHPUT = "send_throughput";
@@ -290,6 +296,7 @@ var graph_data = {};
 var max_ts = 0;
 
 var ws = WebsocketHelper([function(data) {
+  buffer.buffer(data);
   data = Flatten(data);
 	console.log({"message" : "We're in the message handler"});
 
@@ -376,7 +383,6 @@ var ws = WebsocketHelper([function(data) {
 }]);
 var intervalUI = IntervalUI("interval_ui", ws);
 ws.sendMessage({"message" : "Yes we get this far"});
-
 
 
 </script>
