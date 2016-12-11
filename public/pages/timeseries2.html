@@ -7,9 +7,7 @@
 	<link type="text/css" rel="stylesheet" href="../css/vendor/extensions.css?v=2">
   <link type="text/css" rel="stylesheet" href="../css/timeseries_style.css">
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.runtime.min.js"></script>
-  <script src="/js/templates.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
 	<script>
 		jQuery.noConflict();
 	</script>
@@ -46,11 +44,10 @@
 
 	<script src="../js/vendor/extensions.js"></script>
 
-
 	<!-- from original timeseries.html -->
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.runtime.min.js"></script>
-	<script src="/js/templates.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.runtime.min.js"></script>
+  <script src="   /js/templates.js"></script>
 
 	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 	<script src="../js/websocket_helper.js"></script>
@@ -58,8 +55,9 @@
 
 	<link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.6.0/rickshaw.min.css">
 	<script src="/js/prefix_filter.js"></script>
+	<script src="/js/buffer.js"></script>
+  <script src="/js/ui/interval_ui.js"></script>
 	<script src="/js/ui/prefix_ui.js"></script>
-	<script src="/js/ui/interval_ui.js"></script>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
 	<script src="/js/vendor/d3.layout.js"></script>
@@ -77,21 +75,21 @@
 		<section><div id="legend"></div></section>
 		<section>
 			<div id="renderer_form" class="toggler">
-				<input type="radio" name="renderer" id="area" value="area">
+				<input type="radio" name="renderer" id="area" value="area" checked>
 				<label for="area">area</label>
 				<input type="radio" name="renderer" id="bar" value="bar">
 				<label for="bar">bar</label>
-				<input type="radio" name="renderer" id="line" value="line" checked>
+				<input type="radio" name="renderer" id="line" value="line">
 				<label for="line">line</label>
 			</div>
 		</section>
 		<section>
 			<div id="offset_form">
 				<label for="stack">
-					<input type="radio" name="offset" id="stack" value="zero">
+					<input type="radio" name="offset" id="stack" value="zero" checked>
 					<span>stack</span>
 				</label>
-				<label for="stream" style="display: none;">
+				<label for="stream">
 					<input type="radio" name="offset" id="stream" value="wiggle">
 					<span>stream</span>
 				</label>
@@ -100,21 +98,30 @@
 					<span>pct</span>
 				</label>
 				<label for="value">
-					<input type="radio" name="offset" id="value" value="value" checked>
+					<input type="radio" name="offset" id="value" value="value">
 					<span>value</span>
 				</label>
 			</div>
 			<div id="interpolation_form">
 				<label for="cardinal">
-					<input type="radio" name="interpolation" id="cardinal" value="cardinal">
+					<input type="radio" name="interpolation" id="cardinal" value="cardinal" checked>
 					<span>cardinal</span>
 				</label>
 				<label for="linear">
-					<input type="radio" name="interpolation" id="linear" value="linear" checked>
+					<input type="radio" name="interpolation" id="linear" value="linear">
 					<span>linear</span>
+				</label>
+				<label for="step">
+					<input type="radio" name="interpolation" id="step" value="step-after">
+					<span>step</span>
 				</label>
 			</div>
 		</section>
+		<section>
+			<h6>Smoothing</h6>
+			<div id="smoother"></div>
+		</section>
+		<section></section>
 	</form>
 
 	<div id="chart_container">
@@ -125,22 +132,17 @@
 
 </div>
 <div id="interval_ui"></div>
+
 <script>
-
-// set up our data series with 150 random data points
-
-// var seriesData = [ [], [], [], [], [], [], [], [], [] ];
-// var random = new Rickshaw.Fixtures.RandomData(150);
-//
-// for (var i = 0; i < 150; i++) {
-// 	random.addData(seriesData);
-// }
-
-// var palette = new Rickshaw.Color.Palette( { scheme: 'classic9' } );
 
 console.log("before graph render");
 
 // START OUR CODE
+
+// Create a drop-oldest buffer with a 10,000 element capacity. We'll
+// put the server data in this buffer and use buffer.replay(fn) to play back
+// the server data when switching series.
+var buffer = ItemBuffer(10000);
 
 const TOTAL_THROUGHPUT = "total_throughput";
 const SEND_THROUGHPUT = "send_throughput";
@@ -208,7 +210,6 @@ var highlighter = new Rickshaw.Graph.Behavior.Series.Highlight( {
 	legend: legend
 } );
 
-
 var ticksTreatment = 'glow';
 
 var xAxis = new Rickshaw.Graph.Axis.Time( {
@@ -219,12 +220,14 @@ var xAxis = new Rickshaw.Graph.Axis.Time( {
 
 xAxis.render();
 console.log("after x-axis render");
-
-var yAxis = new Rickshaw.Graph.Axis.Y( {
+var logScale = d3.scale.log();
+var linearScale = d3.scale.linear();
+var yAxis = new Rickshaw.Graph.Axis.Y.Scaled( {
 	graph: graph,
 	orientation: 'left',
 	tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-	ticksTreatment: ticksTreatment
+	ticksTreatment: ticksTreatment,
+	scale: linearScale
 } );
 
 yAxis.render();
@@ -262,13 +265,7 @@ console.log("after setInterval render");
 // previewXAxis.render();
 console.log("after preview x-axis render");
 
-
-
-
-
 //////////////////// START OUR CODE
-// CHECK - IS WEBSOCKET WORKING?
-
 
 var calculateThroughput = function(bytes, interval) {
   return bytes/interval * 1000 || 0; //Throughput in #bytes/ms; return 0 if anything is null
@@ -276,24 +273,11 @@ var calculateThroughput = function(bytes, interval) {
 
 // update graph
 var graph_data = {};
-// var iv = setInterval( function() {
-//   for (var i in Object.keys(graph_data)) {
-//     var timestamp_s = Object.keys(graph_data)[i];
-//
-//     for (var j in Object.keys(graph_data[timestamp_s])) {
-//       //graph_data_accumulator[j].push([graph_data[timestamp_s][j], timestamp_s]);
-//     }
-//     graph.series.addData(graph_data[timestamp_s][current_graph], timestamp_s); // second granularity, for smoothness
-//     //console.log(graph_data[timestamp_s][current_graph]);
-//
-//   }
-//   graph.render();
-//   graph_data = {};
-// }, tv );
 
 var max_ts = 0;
 
 var ws = WebsocketHelper([function(data) {
+  buffer.buffer(data);
   data = Flatten(data);
 	console.log({"message" : "We're in the message handler"});
 
@@ -382,9 +366,6 @@ var ws = WebsocketHelper([function(data) {
 }]);
 var intervalUI = IntervalUI("interval_ui", ws);
 ws.sendMessage({"message" : "Yes we get this far"});
-
-
-
 </script>
 
 </body>
