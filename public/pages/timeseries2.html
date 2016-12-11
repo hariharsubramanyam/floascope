@@ -5,6 +5,7 @@
 	<link type="text/css" rel="stylesheet" href="../css/vendor/rickshaw/detail.css">
 	<link type="text/css" rel="stylesheet" href="../css/vendor/rickshaw/legend.css">
 	<link type="text/css" rel="stylesheet" href="../css/vendor/extensions.css?v=2">
+  <link type="text/css" rel="stylesheet" href="../css/timeseries_style.css">
 
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
 	<script>
@@ -43,11 +44,10 @@
 
 	<script src="../js/vendor/extensions.js"></script>
 
-
 	<!-- from original timeseries.html -->
 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.runtime.min.js"></script>
-	<script src="/js/templates.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.runtime.min.js"></script>
+  <script src="   /js/templates.js"></script>
 
 	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 	<script src="../js/websocket_helper.js"></script>
@@ -56,6 +56,7 @@
 	<link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.6.0/rickshaw.min.css">
 	<script src="/js/prefix_filter.js"></script>
 	<script src="/js/buffer.js"></script>
+  <script src="/js/ui/interval_ui.js"></script>
 	<script src="/js/ui/prefix_ui.js"></script>
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
@@ -71,6 +72,9 @@
 
 	<form id="side_panel">
 		<h1>Floascope</h1>
+		<h2 id="yAxisLabel">Throughput (bytes/s) </h2>
+		<h2>vs.</h2>
+		<h2 id="xAxisLabel">Time (s)</h2>
 		<section><div id="legend"></div></section>
 		<section>
 			<div id="renderer_form" class="toggler">
@@ -88,7 +92,7 @@
 					<input type="radio" name="offset" id="stack" value="zero" checked>
 					<span>stack</span>
 				</label>
-				<label for="stream">
+				<label for="stream" style="display:none">
 					<input type="radio" name="offset" id="stream" value="wiggle">
 					<span>stream</span>
 				</label>
@@ -110,15 +114,7 @@
 					<input type="radio" name="interpolation" id="linear" value="linear">
 					<span>linear</span>
 				</label>
-				<label for="step">
-					<input type="radio" name="interpolation" id="step" value="step-after">
-					<span>step</span>
-				</label>
 			</div>
-		</section>
-		<section>
-			<h6>Smoothing</h6>
-			<div id="smoother"></div>
 		</section>
 		<section></section>
 	</form>
@@ -130,12 +126,20 @@
 	</div>
 
 </div>
+<div id="interval_ui"></div>
 
 <script>
 
 console.log("before graph render");
 
 // START OUR CODE
+
+var setAxesLabels = function(yLabel, xLabel) {
+  xLabel = xLabel || "Time (s)";
+  yLabel = yLabel || "Throughput (bytes/s)";
+  document.getElementById("yAxisLabel").innerHTML = yLabel;
+  document.getElementById("xAxisLabel").innerHTML = xLabel;
+};
 
 // Create a drop-oldest buffer with a 10,000 element capacity. We'll
 // put the server data in this buffer and use buffer.replay(fn) to play back
@@ -161,6 +165,7 @@ var graph = new Rickshaw.Graph( {
 	stroke: true,
 	preserve: true,
 	series: new Rickshaw.Series.FixedDuration([{ name: 'zero' }], undefined, {
+		disabled: true,
 		timeInterval: tv,
 		maxDataPoints: 60*1000/tv, // show a minute of data
 		timeBase: new Date().getTime()/1000 // s
@@ -195,6 +200,9 @@ var shelving = new Rickshaw.Graph.Behavior.Series.Toggle( {
 	legend: legend
 } );
 
+legend.shelving = shelving;
+graph.series.legend = legend;
+
 var order = new Rickshaw.Graph.Behavior.Series.Order( {
 	graph: graph,
 	legend: legend
@@ -205,21 +213,15 @@ var highlighter = new Rickshaw.Graph.Behavior.Series.Highlight( {
 	legend: legend
 } );
 
-var smoother = new Rickshaw.Graph.Smoother( {
-	graph: graph,
-	element: document.querySelector('#smoother')
-} );
-
 var ticksTreatment = 'glow';
 
 var xAxis = new Rickshaw.Graph.Axis.Time( {
-	graph: graph,
+	graph: preview.graph,
 	ticksTreatment: ticksTreatment,
 	timeFixture: new Rickshaw.Fixtures.Time.Local()
 } );
 
 xAxis.render();
-console.log("after x-axis render");
 var logScale = d3.scale.log();
 var linearScale = d3.scale.linear();
 var yAxis = new Rickshaw.Graph.Axis.Y.Scaled( {
@@ -231,39 +233,11 @@ var yAxis = new Rickshaw.Graph.Axis.Y.Scaled( {
 } );
 
 yAxis.render();
-console.log("after y-axis render");
 
 var controls = new RenderControls( {
 	element: document.querySelector('form'),
 	graph: graph
 } );
-
-console.log("after controls render");
-
-// add some data every so often
-
-var messages = [
-	"Changed home page welcome message",
-	"Minified JS and CSS",
-	"Changed button color from blue to green",
-	"Refactored SQL query to use indexed columns",
-	"Added additional logging for debugging",
-	"Fixed typo",
-	"Rewrite conditional logic for clarity",
-	"Added documentation for new methods"
-];
-
-console.log("after setInterval render");
-
-
-// THIS IS THE PROBLEM WITH WEBHANDLER <-- THis piece of code for preview xaxis kills it.
-// var previewXAxis = new Rickshaw.Graph.Axis.Time({
-// 	graph: preview.previews[0],
-// 	timeFixture: new Rickshaw.Fixtures.Time.Local(),
-// 	ticksTreatment: ticksTreatment
-// });
-// previewXAxis.render();
-console.log("after preview x-axis render");
 
 //////////////////// START OUR CODE
 
@@ -275,17 +249,10 @@ var calculateRetransPercentage = function(retransmit_bytes, total_bytes){
 	return retransmit_bytes/total_bytes * 100 || 0;
 };
 
-var handleNewData = function(data){
+var handleNewData =	function(data) {
+	buffer.buffer(data);
 
-}
-
-var ws = WebsocketHelper(
-	[
-	function(data) {
-  buffer.buffer(data);
-
-  data = Flatten(data);
-	console.log({"message" : "We're in the message handler"});
+	data = Flatten(data);
 
 	data.filter(function(obj) {
 		return obj
@@ -293,7 +260,7 @@ var ws = WebsocketHelper(
 
 		var source_ip = obj.src_host || obj.src;
 		var dest_ip = obj.dst_host || obj.dst;
-		var key = source_ip + "->" + dest_ip; // doing this since obj.key includes port numbers
+		var key = source_ip + "<br>" + dest_ip; // doing this since obj.key includes port numbers
 
 		var timestamp_s = obj.time_stamp / 1000;
 
@@ -324,15 +291,20 @@ var ws = WebsocketHelper(
 		console.log(data_point);
 		graph.series.addData(data_point, timestamp_s);
 		graph.render();
+		legend.render();
+		shelving.updateBehaviour();
 	});
-}]
+}
 
-, [function() {
+
+var ws = WebsocketHelper(
+	[], [function() {
   console.log('Client has connected to the server!');
   ws.sendMessage({"message": "We're in the connect handler"});
 }], [function() {
   console.log('The client has disconnected!');
 }]);
+var intervalUI = IntervalUI("interval_ui", ws);
 ws.sendMessage({"message" : "Yes we get this far"});
 </script>
 
