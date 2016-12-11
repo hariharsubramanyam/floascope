@@ -17,7 +17,7 @@ class PacketCounter {
    * @param {Function} onTick -
    *  Executed every interval milliseconds. It is executed with one argument,
    *  which is an array of objects (each object represents a TCP connection).
-   *  To see what the objects look like, see the extractData() function in 
+   *  To see what the objects look like, see the extractData() function in
    *  this class.
    */
   constructor(interval, shouldUseReverseDns, onTick) {
@@ -53,15 +53,16 @@ class PacketCounter {
     // function with the result.
     const result = [];
 
+    const now = (new Date()).getTime();
     this.sessionMap.forEach( (value, key, map) => {
-      value.time_stamp = (new Date()).getTime();
+      value.time_stamp = now;
       value.src_host = this.rdns.lookup(this.stripPort(value.src));
       value.dst_host = this.rdns.lookup(this.stripPort(value.dst));
 
       value.num_retrans_bytes_inst = value.num_send_retrans_bytes_inst +
         value.num_recv_retrans_bytes_inst;
 
-      value.num_bytes_inst = value.num_send_bytes_inst + 
+      value.num_bytes_inst = value.num_send_bytes_inst +
         value.num_recv_bytes_inst;
 
       if (value.num_bytes_inst > 0) {

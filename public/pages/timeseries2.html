@@ -164,6 +164,7 @@ var graph = new Rickshaw.Graph( {
 	width: 900,
 	height: 500,
 	renderer: 'line',
+	interpolation: 'linear',
 	stroke: true,
 	preserve: true,
 	series: new Rickshaw.Series.FixedDuration([{ name: 'zero' }], undefined, {
@@ -257,13 +258,6 @@ var messages = [
 	"Added documentation for new methods"
 ];
 
-setInterval( function() {
-	// random.removeData(seriesData);
-	// random.addData(seriesData);
-	graph.update();
-
-}, tv );
-
 console.log("after setInterval render");
 
 
@@ -290,20 +284,22 @@ var calculateThroughput = function(bytes, interval) {
 
 // update graph
 var graph_data = {};
-var iv = setInterval( function() {
-  for (var i in Object.keys(graph_data)) {
-    var timestamp_s = Object.keys(graph_data)[i];
+// var iv = setInterval( function() {
+//   for (var i in Object.keys(graph_data)) {
+//     var timestamp_s = Object.keys(graph_data)[i];
+//
+//     for (var j in Object.keys(graph_data[timestamp_s])) {
+//       //graph_data_accumulator[j].push([graph_data[timestamp_s][j], timestamp_s]);
+//     }
+//     graph.series.addData(graph_data[timestamp_s][current_graph], timestamp_s); // second granularity, for smoothness
+//     //console.log(graph_data[timestamp_s][current_graph]);
+//
+//   }
+//   graph.render();
+//   graph_data = {};
+// }, tv );
 
-    for (var j in Object.keys(graph_data[timestamp_s])) {
-      //graph_data_accumulator[j].push([graph_data[timestamp_s][j], timestamp_s]);
-    }
-    graph.series.addData(graph_data[timestamp_s][current_graph], timestamp_s); // second granularity, for smoothness
-    //console.log(graph_data[timestamp_s][current_graph]);
-
-  }
-  graph.render();
-  graph_data = {};
-}, tv );
+var max_ts = 0;
 
 var ws = WebsocketHelper([function(data) {
   data = Flatten(data);
@@ -319,6 +315,15 @@ var ws = WebsocketHelper([function(data) {
 
 
 		var timestamp_s = obj.time_stamp / 1000;
+
+		if (timestamp_s >= max_ts ){
+			console.log("Weakly Increasing");
+			max_ts = timestamp_s;
+		}
+		else {
+			console.log("Failure", obj );
+		}
+
 		var total_throughput = calculateThroughput(obj["num_bytes_inst"],obj["interval"]); // num_bytes_inst
 		// var send_throughput = calculateThroughput(obj["num_send_bytes_inst"], obj["interval"]);
 		// var recv_throughput = calculateThroughput(obj["num_recv_bytes_inst"], obj["interval"]);
@@ -358,6 +363,22 @@ var ws = WebsocketHelper([function(data) {
 		// graph_data[timestamp_s][SEND_RETRANS_PERCENTAGE][source_ip] += send_retrans_percentage;
 		// graph_data[timestamp_s][RECV_RETRANS_PERCENTAGE][dest_ip] += recv_retrans_percentage;
 		console.log(graph_data[timestamp_s]);
+
+
+		//TODO: Trigger to change the current_graph
+		for (var i in Object.keys(graph_data)) {
+			var timestamp_s = Object.keys(graph_data)[i];
+
+			for (var j in Object.keys(graph_data[timestamp_s])) {
+				//graph_data_accumulator[j].push([graph_data[timestamp_s][j], timestamp_s]);
+			}
+			graph.series.addData(graph_data[timestamp_s][current_graph], timestamp_s); // second granularity, for smoothness
+			//console.log(graph_data[timestamp_s][current_graph]);
+
+		}
+		graph.render();
+
+		graph_data = {};
 	});
 }], [function() {
   console.log('Client has connected to the server!');
