@@ -76,7 +76,9 @@ class PacketCounter {
       value.num_bytes_inst = value.num_send_bytes_inst +
         value.num_recv_bytes_inst;
 
-      result.push(value);
+      if (value.num_bytes_inst > 0) {
+        result.push(value);
+      }
     });
 
     const now = (new Date()).getTime() / 1000.0;
