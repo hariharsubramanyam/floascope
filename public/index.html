@@ -28,6 +28,7 @@
     // Draw the Sankey diagram.
     Sankey("sankey_basic", 7000, data, {}, function(sankey) {
       var ws = WebsocketHelper([function(data) {
+        data = data.connections;
         data = Flatten(data);
         var rows = data.filter(function(obj) {
             return prefixUI.filter().matchesFilter(obj.src) 
