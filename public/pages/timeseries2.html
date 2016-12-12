@@ -255,42 +255,41 @@ var handleNewData =	function(data) {
 	var timestamp = (new Date()).getTime() / 1000.0;
 
 	graph.series.addData({"zero" : 0}, timestamp);
-	data.filter(function(obj) {
-		return obj
-	}).forEach(function(obj) {
+
+	var dataForThisTick = {};
+
+	data.forEach(function(obj) {
 		var source_ip = obj.src_host || obj.src;
 		var dest_ip = obj.dst_host || obj.dst;
 		var key = source_ip + "<br>" + dest_ip; // doing this since obj.key includes port numbers
 
-		var data_point = {};
 		switch(current_graph) {
 			case TOTAL_THROUGHPUT:
-				data_point[key] = calculateThroughput(obj["num_bytes_inst"],obj["interval"]);
+			dataForThisTick[key] = calculateThroughput(obj["num_bytes_inst"],obj["interval"]);
 				break;
 			case SEND_THROUGHPUT:
-				data_point[source_ip] = calculateThroughput(obj["num_send_bytes_inst"], obj["interval"]);
+				dataForThisTick[source_ip] = calculateThroughput(obj["num_send_bytes_inst"], obj["interval"]);
 				break;
 			case RECV_THROUGHPUT:
-				data_point[dest_ip] = calculateThroughput(obj["num_recv_bytes_inst"], obj["interval"]);
+				dataForThisTick[dest_ip] = calculateThroughput(obj["num_recv_bytes_inst"], obj["interval"]);
 				break;
 			case TOTAL_RETRANS_PERCENTAGE:
-				data_point[key] = calculateRetransPercentage(obj["num_retrans_bytes_inst"],obj["num_bytes_inst"]);
+				dataForThisTick[key] = calculateRetransPercentage(obj["num_retrans_bytes_inst"],obj["num_bytes_inst"]);
 				break;
 			case SEND_RETRANS_PERCENTAGE:
-				data_point[source_ip] = calculateRetransPercentage(obj["send_retrans_bytes_inst"],obj["num_send_bytes_inst"]);
+				dataForThisTick[source_ip] = calculateRetransPercentage(obj["send_retrans_bytes_inst"],obj["num_send_bytes_inst"]);
 				break;
 			case RECV_RETRANS_PERCENTAGE:
-				data_point[dest_ip] = calculateRetransPercentage(obj["recv_retrans_bytes_inst"],obj["num_recv_bytes_inst"]);
+				dataForThisTick[dest_ip] = calculateRetransPercentage(obj["recv_retrans_bytes_inst"],obj["num_recv_bytes_inst"]);
 				break;
 			default:
 				console.log('Whatchu say Willis?');
-		}
+		}});
 
-		graph.series.addData(data_point, timestamp);
-		graph.render();
-		legend.render();
-		shelving.updateBehaviour();
-	});
+	graph.series.addData(dataForThisTick, timestamp);
+	graph.render();
+	legend.render();
+	shelving.updateBehaviour();
 }
 
 
