@@ -302,11 +302,11 @@ var calculateThroughput = function(bytes, interval) {
 	return bytes/interval * 1000 || 0; //Throughput in #bytes/ms; return 0 if anything is null
 };
 
-var handleNewData =	function(data) {
+var handleNewData =	function(fullData) {
+  var data = fullData.connections;
+  var timestamp = fullData.timestamp;
 	console.log(current_graph);
 	data = Flatten(data);
-
-	var timestamp = (new Date()).getTime() / 1000.0;
 
 	graph.series.addData({"zero" : 0}, timestamp);
 

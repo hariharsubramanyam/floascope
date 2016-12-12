@@ -14,7 +14,6 @@
 
     that.replay = function(fn) {
       buffer.forEach(fn);
-      buffer = [];
     };
 
     Object.freeze(that);

@@ -66,9 +66,7 @@ class PacketCounter {
     // function with the result.
     const result = [];
 
-    const now = (new Date()).getTime();
     this.sessionMap.forEach( (value, key, map) => {
-      value.time_stamp = now;
       value.src_host = this.rdns.lookup(this.stripPort(value.src));
       value.dst_host = this.rdns.lookup(this.stripPort(value.dst));
 
@@ -84,7 +82,11 @@ class PacketCounter {
       result.push(value);
     });
 
-    this.onTick(result);
+    const now = (new Date()).getTime() / 1000.0;
+    this.onTick({
+      "timestamp": now,
+      "connections": result
+    });
     this.clear();
 
     //this.sessionMap.forEach(v => v.num_bytes = 0);
