@@ -70,6 +70,34 @@
 
 <div id="content">
 
+	<section>
+		<div id="dataset_form">
+			<label for="total_throughput">
+				<input type="radio" name="dataset" id="total_throughput" value="total_throughput" checked>
+				<span>Total Throughput</span>
+			</label>
+			<label for="send_throughput">
+				<input type="radio" name="dataset" id="send_throughput" value="send_throughput">
+				<span>Sent Throughput</span>
+			</label>
+			<label for="recv_throughput">
+				<input type="radio" name="dataset" id="recv_throughput" value="recv_throughput">
+				<span>Receive Throughput</span>
+			</label>
+			<label for="total_retrans_perc">
+				<input type="radio" name="dataset" id="total_retransmit_perc" value="total_retransmit_perc" >
+				<span>Total Retransmission Percentage</span>
+			</label>
+			<label for="send_retransmit_perc">
+				<input type="radio" name="dataset" id="send_retransmit_perc" value="send_retransmit_perc">
+				<span>Send Retransmission Percentage</span>
+			</label>
+			<label for="recv_retransmit_perc">
+				<input type="radio" name="dataset" id="linear" value="recv_retransmit_perc">
+				<span>Received Retrasnmission Percentage</span>
+			</label>
+		</div>
+	</section>
 	<form id="side_panel">
 		<h1>Floascope</h1>
 		<h2 id="yAxisLabel">Throughput (bytes/s) </h2>
@@ -86,6 +114,8 @@
 				<label for="line">line</label>
 			</div>
 		</section>
+
+
 		<section>
 			<div id="offset_form">
 				<label for="stack">
@@ -174,6 +204,30 @@ var graph = new Rickshaw.Graph( {
 
 graph.render();
 // END OUR CODE
+var clearGraph = function(){
+	console.log('clearGraph');
+	while (graph.series.length >0) {
+		graph.series.pop();
+	}
+}
+
+var refreshGraph = function(){
+	console.log('in refreshGraph', current_graph);
+	buffer.replay(handleNewData);
+	graph.update();
+	legend.render();
+	shelving.updateBehaviour();
+}
+
+jQuery(function($){
+	$("input[name=dataset]").change(function (e) {
+	console.log('in jq', current_graph);
+
+	clearGraph();
+	current_graph = e.target.value;
+	refreshGraph();
+	})
+});
 
 
 var preview = new Rickshaw.Graph.RangeSlider( {
@@ -249,7 +303,7 @@ var calculateThroughput = function(bytes, interval) {
 };
 
 var handleNewData =	function(data) {
-	buffer.buffer(data);
+	console.log(current_graph);
 	data = Flatten(data);
 
 	var timestamp = (new Date()).getTime() / 1000.0;
@@ -287,14 +341,18 @@ var handleNewData =	function(data) {
 		}});
 
 	graph.series.addData(dataForThisTick, timestamp);
-	graph.render();
-	legend.render();
-	shelving.updateBehaviour();
 }
 
 
 var ws = WebsocketHelper(
-	[handleNewData], [function() {
+	[function(data) {
+		buffer.buffer(data);
+		handleNewData(data);
+		graph.render();
+		legend.render();
+		shelving.updateBehaviour();
+	}
+], [function() {
   console.log('Client has connected to the server!');
   ws.sendMessage({"message": "We're in the connect handler"});
 }], [function() {
