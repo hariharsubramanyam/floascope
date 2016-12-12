@@ -251,13 +251,13 @@ var calculateRetransPercentage = function(retransmit_bytes, total_bytes){
 
 var handleNewData =	function(data) {
 	buffer.buffer(data);
-
 	data = Flatten(data);
 
+	graph.series.addData({"zero" : 0}, new Date().getTime());
+	console.log(data);
 	data.filter(function(obj) {
 		return obj
 	}).forEach(function(obj) {
-
 		var source_ip = obj.src_host || obj.src;
 		var dest_ip = obj.dst_host || obj.dst;
 		var key = source_ip + "<br>" + dest_ip; // doing this since obj.key includes port numbers
@@ -288,7 +288,6 @@ var handleNewData =	function(data) {
 				console.log('Whatchu say Willis?');
 		}
 
-		console.log(data_point);
 		graph.series.addData(data_point, timestamp_s);
 		graph.render();
 		legend.render();
@@ -298,7 +297,7 @@ var handleNewData =	function(data) {
 
 
 var ws = WebsocketHelper(
-	[], [function() {
+	[handleNewData], [function() {
   console.log('Client has connected to the server!');
   ws.sendMessage({"message": "We're in the connect handler"});
 }], [function() {
