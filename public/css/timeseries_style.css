@@ -7,8 +7,18 @@
   width: 270px;
 }
 
+h1 {
+	font-size: 20px;
+}
+
 h2 {
 	font-family: Franklin Gothic Medium, UnDotum, Helvetica, Arial;
 	font-weight: normal;
-	font-size: 14px;
+	font-size: 16px;
+}
+
+#legend .line {
+	font-size: 16px;
+	padding-left: 42px;
+	text-indent: -42px ;
 }
