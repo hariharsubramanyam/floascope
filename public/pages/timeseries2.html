@@ -130,7 +130,6 @@
 
 <script>
 
-console.log("before graph render");
 
 // START OUR CODE
 
@@ -153,6 +152,7 @@ const TOTAL_RETRANS_PERCENTAGE = "total_retransmit_perc";
 const SEND_RETRANS_PERCENTAGE = "send_retransmit_perc";
 const RECV_RETRANS_PERCENTAGE = "recv_retransmit_perc";
 var current_graph = TOTAL_THROUGHPUT;
+
 // instantiate our graph!
 var tv = 1000; // ms
 // instantiate
@@ -174,7 +174,6 @@ var graph = new Rickshaw.Graph( {
 
 graph.render();
 // END OUR CODE
-console.log("after graph render");
 
 
 var preview = new Rickshaw.Graph.RangeSlider( {
@@ -241,28 +240,27 @@ var controls = new RenderControls( {
 
 //////////////////// START OUR CODE
 
-var calculateThroughput = function(bytes, interval) {
-  return bytes/interval * 1000 || 0; //Throughput in #bytes/ms; return 0 if anything is null
-};
-
 var calculateRetransPercentage = function(retransmit_bytes, total_bytes){
 	return retransmit_bytes/total_bytes * 100 || 0;
+};
+
+var calculateThroughput = function(bytes, interval) {
+	return bytes/interval * 1000 || 0; //Throughput in #bytes/ms; return 0 if anything is null
 };
 
 var handleNewData =	function(data) {
 	buffer.buffer(data);
 	data = Flatten(data);
 
-	graph.series.addData({"zero" : 0}, new Date().getTime());
-	console.log(data);
+	var timestamp = (new Date()).getTime() / 1000.0;
+
+	graph.series.addData({"zero" : 0}, timestamp);
 	data.filter(function(obj) {
 		return obj
 	}).forEach(function(obj) {
 		var source_ip = obj.src_host || obj.src;
 		var dest_ip = obj.dst_host || obj.dst;
 		var key = source_ip + "<br>" + dest_ip; // doing this since obj.key includes port numbers
-
-		var timestamp_s = obj.time_stamp / 1000;
 
 		var data_point = {};
 		switch(current_graph) {
@@ -288,7 +286,7 @@ var handleNewData =	function(data) {
 				console.log('Whatchu say Willis?');
 		}
 
-		graph.series.addData(data_point, timestamp_s);
+		graph.series.addData(data_point, timestamp);
 		graph.render();
 		legend.render();
 		shelving.updateBehaviour();
