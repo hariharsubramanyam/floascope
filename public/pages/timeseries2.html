@@ -55,7 +55,6 @@
 
 	<link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/rickshaw/1.6.0/rickshaw.min.css">
 	<script src="/js/prefix_filter.js"></script>
-	<script src="/js/buffer.js"></script>
   <script src="/js/ui/interval_ui.js"></script>
 	<script src="/js/ui/prefix_ui.js"></script>
 
@@ -170,11 +169,6 @@ var setAxesLabels = function(yLabel, xLabel) {
   document.getElementById("xAxisLabel").innerHTML = xLabel;
 };
 
-// Create a drop-oldest buffer with a 10,000 element capacity. We'll
-// put the server data in this buffer and use buffer.replay(fn) to play back
-// the server data when switching series.
-var buffer = ItemBuffer(10000);
-
 const TOTAL_THROUGHPUT = "total_throughput";
 const SEND_THROUGHPUT = "send_throughput";
 const RECV_THROUGHPUT = "recv_throughput";
@@ -186,6 +180,53 @@ var current_graph = TOTAL_THROUGHPUT;
 // instantiate our graph!
 var tv = 1000; // ms
 // instantiate
+
+
+var calculateRetransPercentage = function(retransmit_bytes, total_bytes){
+	return retransmit_bytes/total_bytes * 100 || 0;
+};
+
+var calculateThroughput = function(bytes, interval) {
+	return bytes/interval * 1000 || 0; //Throughput in #bytes/ms; return 0 if anything is null
+};
+
+var makeSeries = function() {
+  return new Rickshaw.Series.FixedDuration([{ name: 'zero' }], undefined, {
+    disabled: true,
+    timeInterval: tv,
+    maxDataPoints: 60*1000/tv, // show a minute of data
+    timeBase: new Date().getTime()/1000 // s
+  })
+};
+
+
+const computerForField = {};
+const makeEntry = function(fn) {
+  return {
+    "series": makeSeries(),
+    "getValue": fn,
+    "tmpMap": {}
+  };
+};
+computerForField[TOTAL_THROUGHPUT] = makeEntry(function(obj) {
+  return calculateThroughput(obj["num_bytes_inst"],obj["interval"]);
+});
+computerForField[SEND_THROUGHPUT] = makeEntry(function(obj) {
+  return calculateThroughput(obj["num_send_bytes_inst"], obj["interval"]);
+});
+computerForField[RECV_THROUGHPUT] = makeEntry(function(obj) {
+  return calculateThroughput(obj["num_recv_bytes_inst"], obj["interval"]);
+});
+computerForField[TOTAL_RETRANS_PERCENTAGE] = makeEntry(function(obj) {
+  return calculateRetransPercentage(obj["num_retrans_bytes_inst"],obj["num_bytes_inst"]);
+});
+computerForField[SEND_RETRANS_PERCENTAGE] = makeEntry(function(obj) {
+  return calculateRetransPercentage(obj["send_retrans_bytes_inst"],obj["num_send_bytes_inst"]);
+});
+computerForField[RECV_RETRANS_PERCENTAGE] = makeEntry(function(obj) {
+  return calculateRetransPercentage(obj["recv_retrans_bytes_inst"],obj["num_recv_bytes_inst"]);
+});
+
 var graph = new Rickshaw.Graph( {
 	element: document.getElementById("chart"),
 	width: 900,
@@ -194,38 +235,21 @@ var graph = new Rickshaw.Graph( {
 	interpolation: 'linear',
 	stroke: true,
 	preserve: true,
-	series: new Rickshaw.Series.FixedDuration([{ name: 'zero' }], undefined, {
-		disabled: true,
-		timeInterval: tv,
-		maxDataPoints: 60*1000/tv, // show a minute of data
-		timeBase: new Date().getTime()/1000 // s
-	})
+	series: makeSeries()
 } );
 
 graph.render();
 // END OUR CODE
-var clearGraph = function(){
-	console.log('clearGraph');
-	while (graph.series.length >0) {
-		graph.series.pop();
-	}
-}
-
-var refreshGraph = function(){
-	console.log('in refreshGraph', current_graph);
-	buffer.replay(handleNewData);
-	graph.update();
-	legend.render();
-	shelving.updateBehaviour();
-}
 
 jQuery(function($){
 	$("input[name=dataset]").change(function (e) {
-	console.log('in jq', current_graph);
-
-	clearGraph();
-	current_graph = e.target.value;
-	refreshGraph();
+    current_graph = e.target.value;
+    for(var i = 0; i < computerForField[current_graph].series.length; i++) {
+      graph.series[i] = computerForField[current_graph].series[i];
+    }
+    graph.update();
+    legend.render();
+    shelving.updateBehaviour();
 	})
 });
 
@@ -294,59 +318,35 @@ var controls = new RenderControls( {
 
 //////////////////// START OUR CODE
 
-var calculateRetransPercentage = function(retransmit_bytes, total_bytes){
-	return retransmit_bytes/total_bytes * 100 || 0;
-};
-
-var calculateThroughput = function(bytes, interval) {
-	return bytes/interval * 1000 || 0; //Throughput in #bytes/ms; return 0 if anything is null
-};
-
 var handleNewData =	function(fullData) {
   var data = fullData.connections;
   var timestamp = fullData.timestamp;
-	console.log(current_graph);
 	data = Flatten(data);
 
 	graph.series.addData({"zero" : 0}, timestamp);
 
-	var dataForThisTick = {};
+  Object.keys(computerForField).forEach(function(key) {
+    computerForField[key].tmpMap = {};
+  });
 
 	data.forEach(function(obj) {
 		var source_ip = obj.src_host || obj.src;
 		var dest_ip = obj.dst_host || obj.dst;
 		var key = source_ip + "<br>" + dest_ip; // doing this since obj.key includes port numbers
+    Object.keys(computerForField).forEach(function(k) {
+      computerForField[k].tmpMap[key] = computerForField[k].getValue(obj);
+    });
+  });
 
-		switch(current_graph) {
-			case TOTAL_THROUGHPUT:
-			dataForThisTick[key] = calculateThroughput(obj["num_bytes_inst"],obj["interval"]);
-				break;
-			case SEND_THROUGHPUT:
-				dataForThisTick[source_ip] = calculateThroughput(obj["num_send_bytes_inst"], obj["interval"]);
-				break;
-			case RECV_THROUGHPUT:
-				dataForThisTick[dest_ip] = calculateThroughput(obj["num_recv_bytes_inst"], obj["interval"]);
-				break;
-			case TOTAL_RETRANS_PERCENTAGE:
-				dataForThisTick[key] = calculateRetransPercentage(obj["num_retrans_bytes_inst"],obj["num_bytes_inst"]);
-				break;
-			case SEND_RETRANS_PERCENTAGE:
-				dataForThisTick[source_ip] = calculateRetransPercentage(obj["send_retrans_bytes_inst"],obj["num_send_bytes_inst"]);
-				break;
-			case RECV_RETRANS_PERCENTAGE:
-				dataForThisTick[dest_ip] = calculateRetransPercentage(obj["recv_retrans_bytes_inst"],obj["num_recv_bytes_inst"]);
-				break;
-			default:
-				console.log('Whatchu say Willis?');
-		}});
-
-	graph.series.addData(dataForThisTick, timestamp);
+  Object.keys(computerForField).forEach(function(k) {
+    computerForField[k].series.addData(computerForField[k].tmpMap, timestamp);
+  });
+	graph.series.addData(computerForField[current_graph].tmpMap, timestamp);
 }
 
 
 var ws = WebsocketHelper(
 	[function(data) {
-		buffer.buffer(data);
 		handleNewData(data);
 		graph.render();
 		legend.render();
