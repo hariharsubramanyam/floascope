@@ -68,8 +68,6 @@
 </head>
 <body>
 
-<div id="interval_ui"></div>
-<div id="pause_play_ui"></div>
 <div id="content">
     <form id="side_panel">
         <h1>Floascope</h1>
@@ -81,27 +79,27 @@
         <section>
             <div id="dataset_form">
                 <label for="total_throughput">
-                    <input type="radio" name="dataset" id="total_throughput" value="total_throughput" checked>
-                    <span>Total Throughput</span>
+                    <input type="radio" name="dataset" id="total_throughput" value="Total Throughput (bytes/s)" checked>
+                    <span>Total Throughput (bytes/s)</span>
                 </label><br>
                 <label for="send_throughput">
-                    <input type="radio" name="dataset" id="send_throughput" value="send_throughput">
-                    <span>Sent Throughput</span>
+                    <input type="radio" name="dataset" id="send_throughput" value="Sent Throughput (bytes/s)">
+                    <span>Sent Throughput (bytes/s)</span>
                 </label><br>
                 <label for="recv_throughput">
-                    <input type="radio" name="dataset" id="recv_throughput" value="recv_throughput">
-                    <span>Receive Throughput</span>
+                    <input type="radio" name="dataset" id="recv_throughput" value="Receive Throughput (bytes/s)">
+                    <span>Receive Throughput (bytes/s)</span>
                 </label><br>
                 <label for="total_retrans_perc">
-                    <input type="radio" name="dataset" id="total_retransmit_perc" value="total_retransmit_perc" >
+                    <input type="radio" name="dataset" id="total_retransmit_perc" value="% Total Retransmission" >
                     <span>% Total Retransmission</span>
                 </label><br>
                 <label for="send_retransmit_perc">
-                    <input type="radio" name="dataset" id="send_retransmit_perc" value="send_retransmit_perc">
+                    <input type="radio" name="dataset" id="send_retransmit_perc" value="% Send Retransmission">
                     <span>% Send Retransmission</span>
                 </label><br>
                 <label for="recv_retransmit_perc">
-                    <input type="radio" name="dataset" id="linear" value="recv_retransmit_perc">
+                    <input type="radio" name="dataset" id="linear" value="% Received Retrasnmission">
                     <span>% Received Retrasnmission</span>
                 </label>
             </div>
@@ -152,9 +150,15 @@
     </form>
 
     <div id="chart_container">
+        <div id="header">
+            <div id="interval_ui"></div>
+            <div id="pause_play_ui"></div>
+        </div>
+
         <div id="chart"></div>
         <div id="timeline"></div>
         <div id="preview"></div>
+        </div>
     </div>
 
 </div>
@@ -231,7 +235,7 @@ computerForField[RECV_RETRANS_PERCENTAGE] = makeEntry(function(obj) {
 
 var graph = new Rickshaw.Graph( {
     element: document.getElementById("chart"),
-    width: 900,
+    width: document.getElementById("content").offsetWidth*.9 - 270,
     height: 500,
     renderer: 'line',
     interpolation: 'linear',
@@ -245,10 +249,11 @@ graph.render();
 
 jQuery(function($){
     $("input[name=dataset]").change(function (e) {
-    current_graph = e.target.value;
+    current_graph = e.target.id;
     for(var i = 0; i < computerForField[current_graph].series.length; i++) {
       graph.series[i] = computerForField[current_graph].series[i];
     }
+    setAxesLabels(yLabel=e.target.value);
     graph.render();
     legend.render();
     shelving.updateBehaviour();
@@ -347,15 +352,15 @@ var handleNewData = function(fullData) {
 
 
 var ws = WebsocketHelper(
-    [function(data) {
-    if (pausePlayUI.isPaused()) {
-      return;
-    }
-        handleNewData(data);
-        graph.render();
-        legend.render();
-        shelving.updateBehaviour();
-    }
+[function(data) {
+		handleNewData(data);
+		if (pausePlayUI.isPaused()) {
+          return;
+        }
+		graph.render();
+		legend.render();
+		shelving.updateBehaviour();
+	}
 ], [function() {
   console.log('Client has connected to the server!');
   ws.sendMessage({"message": "We're in the connect handler"});
