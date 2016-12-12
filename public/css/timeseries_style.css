@@ -7,6 +7,11 @@
   width: 270px;
 }
 
+#legend {
+  height: 400px;
+  overflow-y: auto;
+}
+
 h2 {
 	font-family: Franklin Gothic Medium, UnDotum, Helvetica, Arial;
 	font-weight: normal;
