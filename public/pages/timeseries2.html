@@ -347,10 +347,11 @@ var handleNewData =	function(fullData) {
 
 var ws = WebsocketHelper(
 	[function(data) {
-    if (pausePlayUI.isPaused()) {
+
+		handleNewData(data);
+		if (pausePlayUI.isPaused()) {
       return;
     }
-		handleNewData(data);
 		graph.render();
 		legend.render();
 		shelving.updateBehaviour();
