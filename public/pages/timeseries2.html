@@ -110,8 +110,6 @@
 			<div id="renderer_form" class="toggler">
 				<input type="radio" name="renderer" id="area" value="area" checked>
 				<label for="area">area</label>
-				<input type="radio" name="renderer" id="bar" value="bar">
-				<label for="bar">bar</label>
 				<input type="radio" name="renderer" id="line" value="line">
 				<label for="line">line</label>
 			</div>
@@ -249,7 +247,7 @@ jQuery(function($){
     for(var i = 0; i < computerForField[current_graph].series.length; i++) {
       graph.series[i] = computerForField[current_graph].series[i];
     }
-    graph.update();
+    graph.render();
     legend.render();
     shelving.updateBehaviour();
 	})
