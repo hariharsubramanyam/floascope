@@ -78,9 +78,6 @@ class PacketCounter {
       value.num_bytes_inst = value.num_send_bytes_inst +
         value.num_recv_bytes_inst;
 
-      value.pct_retrans_bytes_inst = (value.num_bytes_inst === 0) ? 0 :
-        value.num_retrans_bytes_inst / value.num_bytes_inst;
-
       result.push(value);
     });
 
@@ -188,10 +185,6 @@ class PacketCounter {
 
       // The total number of bytes received by the src in the last interval.
       "num_recv_bytes_inst" : 0,
-
-      // The percentage of traffic in the last interval that consisted
-      // of retransmitted bytes.
-      "pct_retrans_bytes_inst": 0,
 
       // The total number of bytes retransmitted in the last interval.
       "num_retrans_bytes_inst" : 0,
