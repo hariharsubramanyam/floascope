@@ -1,3 +1,5 @@
+/*
+
 Rickshaw.namespace('Rickshaw.Series');
 
 Rickshaw.Series = Rickshaw.Class.create( Array, {
@@ -163,3 +165,4 @@ Rickshaw.Series.fill = function(series, fill) {
 	}
 };
 
+*/

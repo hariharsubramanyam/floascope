@@ -1,5 +1,6 @@
 <!doctype html>
 <head>
+    <title>Floascope</title>
     <link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css">
     <link type="text/css" rel="stylesheet" href="../css/vendor/rickshaw/graph.css">
     <link type="text/css" rel="stylesheet" href="../css/vendor/rickshaw/detail.css">
@@ -24,8 +25,6 @@
     <script src="../js/vendor/rickshaw/Rickshaw.Graph.Renderer.Bar.js"></script>
     <script src="../js/vendor/rickshaw/Rickshaw.Graph.Renderer.ScatterPlot.js"></script>
     <script src="../js/vendor/rickshaw/Rickshaw.Graph.Renderer.Stack.js"></script>
-    <script src="../js/vendor/rickshaw/Rickshaw.Graph.RangeSlider.js"></script>
-    <script src="../js/vendor/rickshaw/Rickshaw.Graph.RangeSlider.Preview.js"></script>
     <script src="../js/vendor/rickshaw/Rickshaw.Graph.HoverDetail.js"></script>
     <!-- <script src="../js/vendor/rickshaw/Rickshaw.Graph.Annotate.js"></script> -->
     <script src="../js/vendor/rickshaw/Rickshaw.Graph.Legend.js"></script>
@@ -107,20 +106,6 @@
         </section>
 
         <section>
-            <div id="renderer_form" class="toggler">
-                <input type="radio" name="renderer" id="line" value="line" checked>
-                <label for="line">line</label>
-            </div>
-        </section>
-
-
-        <section>
-            <div id="offset_form">
-                <label for="value">
-                    <input type="radio" name="offset" id="value" value="value" checked>
-                    <span>value</span>
-                </label>
-            </div>
             <div id="interpolation_form">
                 <label for="cardinal">
                     <input type="radio" name="interpolation" id="cardinal" value="cardinal">
@@ -178,11 +163,9 @@ var tv = 1000; // ms
 var calculateRetransPercentage = function(retransmit_bytes, total_bytes){
     if (retransmit_bytes > total_bytes) {
       console.log('failure');
-
     }
     else{
       console.log(retransmit_bytes, total_bytes, retransmit_bytes/total_bytes);
-
       console.log('success');
     }
     return retransmit_bytes/total_bytes * 100 || 0;
@@ -250,7 +233,6 @@ jQuery(function($){
       graph.series[i] = computerForField[current_graph].series[i];
     }
     setAxesLabels(yLabel=e.target.value);
-    console.log()
     graph.render();
     legend.render();
     shelving.updateBehaviour();
@@ -320,9 +302,8 @@ var controls = new RenderControls( {
     graph: graph
 } );
 
-//////////////////// START OUR CODE
-
 var purger = Purger();
+
 var handleNewData = function(fullData) {
   var data = fullData.connections;
   var timestamp = fullData.timestamp;
@@ -364,13 +345,15 @@ var handleNewData = function(fullData) {
 var ws = WebsocketHelper(
 [function(data) {
   if (pausePlayUI.isPaused()) {
+        legend.render();
+        shelving.updateBehaviour();
         return;
-      }
-		handleNewData(data);
-		graph.render();
-		legend.render();
-		shelving.updateBehaviour();
-	}
+  }
+  handleNewData(data);
+  graph.render();
+  legend.render();
+  shelving.updateBehaviour();
+  }
 ], [function() {
   console.log('Client has connected to the server!');
   ws.sendMessage({"message": "We're in the connect handler"});
