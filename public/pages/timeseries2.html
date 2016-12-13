@@ -308,7 +308,6 @@ var handleNewData = function(fullData) {
   var data = fullData.connections;
   var timestamp = fullData.timestamp;
   data = Flatten(data);
-  graph.series.addData({"base" : 0}, timestamp);
 
   Object.keys(computerForField).forEach(function(key) {
     computerForField[key].tmpMap = {};
