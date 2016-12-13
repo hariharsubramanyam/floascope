@@ -71,8 +71,8 @@
 <div id="content">
     <form id="side_panel">
         <h1>Floascope</h1>
-        <h2> 
-            <span id="yAxisLabel">Throughput (bytes/s)</span> vs. 
+        <h2>
+            <span id="yAxisLabel">Throughput (bytes/s)</span> vs.
             <br>
             <span id="xAxisLabel">Time (s)</span>
         </h2>
@@ -107,9 +107,9 @@
 
         <section>
             <div id="renderer_form" class="toggler">
-                <input type="radio" name="renderer" id="area" value="area" checked>
+                <input type="radio" name="renderer" id="area" value="area">
                 <label for="area">area</label>
-                <input type="radio" name="renderer" id="line" value="line">
+                <input type="radio" name="renderer" id="line" value="line" checked>
                 <label for="line">line</label>
             </div>
         </section>
@@ -136,11 +136,11 @@
             </div>
             <div id="interpolation_form">
                 <label for="cardinal">
-                    <input type="radio" name="interpolation" id="cardinal" value="cardinal" checked>
+                    <input type="radio" name="interpolation" id="cardinal" value="cardinal">
                     <span>cardinal</span>
                 </label>
                 <label for="linear">
-                    <input type="radio" name="interpolation" id="linear" value="linear">
+                    <input type="radio" name="interpolation" id="linear" value="linear" checked>
                     <span>linear</span>
                 </label>
             </div>
@@ -157,7 +157,7 @@
 
         <div id="chart"></div>
         <div id="timeline"></div>
-        <div id="preview"></div>
+        <!-- <div id="preview"></div> -->
         </div>
     </div>
 
@@ -189,6 +189,14 @@ var tv = 1000; // ms
 
 
 var calculateRetransPercentage = function(retransmit_bytes, total_bytes){
+    if (retransmit_bytes > total_bytes) {
+      console.log('failure');
+      console.log(retransmit_bytes, total_bytes, retransmit_bytes/total_bytes);
+
+    }
+    else{
+      console.log('success');
+    }
     return retransmit_bytes/total_bytes * 100 || 0;
 };
 
@@ -261,10 +269,10 @@ jQuery(function($){
 });
 
 
-var preview = new Rickshaw.Graph.RangeSlider( {
-    graph: graph,
-    element: document.getElementById('preview'),
-} );
+// var preview = new Rickshaw.Graph.RangeSlider( {
+//     graph: graph,
+//     element: document.getElementById('preview'),
+// } );
 
 var hoverDetail = new Rickshaw.Graph.HoverDetail( {
     graph: graph,
@@ -300,7 +308,7 @@ var highlighter = new Rickshaw.Graph.Behavior.Series.Highlight( {
 var ticksTreatment = 'glow';
 
 var xAxis = new Rickshaw.Graph.Axis.Time( {
-    graph: preview.graph,
+    graph: graph,
     ticksTreatment: ticksTreatment,
     timeFixture: new Rickshaw.Fixtures.Time.Local()
 } );
@@ -328,7 +336,7 @@ var controls = new RenderControls( {
 var handleNewData = function(fullData) {
   var data = fullData.connections;
   var timestamp = fullData.timestamp;
-  data = Flatten(data);  
+  data = Flatten(data);
   graph.series.addData({"base" : 0}, timestamp);
 
   Object.keys(computerForField).forEach(function(key) {
@@ -353,10 +361,11 @@ var handleNewData = function(fullData) {
 
 var ws = WebsocketHelper(
 [function(data) {
+  if (pausePlayUI.isPaused()) {
+        return;
+      }
 		handleNewData(data);
-		if (pausePlayUI.isPaused()) {
-          return;
-        }
+
 		graph.render();
 		legend.render();
 		shelving.updateBehaviour();
