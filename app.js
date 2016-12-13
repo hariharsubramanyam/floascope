@@ -68,6 +68,17 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.set("view options", {layout: false});
+app.engine('html', require('ejs').renderFile);
+
+app.get('/sankey', function(req, res) {
+  res.render('sankey.html');  
+});
+
+app.get('/timeseries', function(req, res) {
+  res.render('timeseries.html');  
+});
+
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
   const err = new Error('Not Found');
