@@ -338,7 +338,7 @@ var handleNewData = function(fullData) {
   data.forEach(function(obj) {
     var source_ip = obj.src_host || obj.src;
     var dest_ip = obj.dst_host || obj.dst;
-    var key = source_ip + "<br>" + dest_ip; // doing this since obj.key includes port numbers
+    var key = source_ip + " -> <br>" + dest_ip; // doing this since obj.key includes port numbers
     Object.keys(computerForField).forEach(function(k) {
         computerForField[k].tmpMap[key] = computerForField[k].getValue(obj);
     });
