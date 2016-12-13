@@ -99,7 +99,7 @@
                     <span>% Send Retransmission</span>
                 </label><br>
                 <label for="recv_retransmit_perc">
-                    <input type="radio" name="dataset" id="linear" value="% Received Retrasnmission">
+                    <input type="radio" name="dataset" id="recv_retransmit_perc" value="% Received Retrasnmission">
                     <span>% Received Retrasnmission</span>
                 </label>
             </div>
@@ -107,8 +107,6 @@
 
         <section>
             <div id="renderer_form" class="toggler">
-                <input type="radio" name="renderer" id="area" value="area">
-                <label for="area">area</label>
                 <input type="radio" name="renderer" id="line" value="line" checked>
                 <label for="line">line</label>
             </div>
@@ -117,20 +115,8 @@
 
         <section>
             <div id="offset_form">
-                <label for="stack">
-                    <input type="radio" name="offset" id="stack" value="zero" checked>
-                    <span>stack</span>
-                </label>
-                <label for="stream" style="display:none">
-                    <input type="radio" name="offset" id="stream" value="wiggle">
-                    <span>stream</span>
-                </label>
-                <label for="pct">
-                    <input type="radio" name="offset" id="pct" value="expand">
-                    <span>pct</span>
-                </label>
                 <label for="value">
-                    <input type="radio" name="offset" id="value" value="value">
+                    <input type="radio" name="offset" id="value" value="value" checked>
                     <span>value</span>
                 </label>
             </div>
@@ -191,10 +177,11 @@ var tv = 1000; // ms
 var calculateRetransPercentage = function(retransmit_bytes, total_bytes){
     if (retransmit_bytes > total_bytes) {
       console.log('failure');
-      console.log(retransmit_bytes, total_bytes, retransmit_bytes/total_bytes);
 
     }
     else{
+      console.log(retransmit_bytes, total_bytes, retransmit_bytes/total_bytes);
+
       console.log('success');
     }
     return retransmit_bytes/total_bytes * 100 || 0;
@@ -262,6 +249,7 @@ jQuery(function($){
       graph.series[i] = computerForField[current_graph].series[i];
     }
     setAxesLabels(yLabel=e.target.value);
+    console.log()
     graph.render();
     legend.render();
     shelving.updateBehaviour();
@@ -365,7 +353,6 @@ var ws = WebsocketHelper(
         return;
       }
 		handleNewData(data);
-
 		graph.render();
 		legend.render();
 		shelving.updateBehaviour();
