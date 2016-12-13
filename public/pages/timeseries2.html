@@ -58,6 +58,7 @@
   <script src="/js/ui/interval_ui.js"></script>
   <script src="/js/ui/pause_play_ui.js"></script>
     <script src="/js/ui/prefix_ui.js"></script>
+    <script src="/js/purger.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
     <script src="/js/vendor/d3.layout.js"></script>
@@ -321,6 +322,7 @@ var controls = new RenderControls( {
 
 //////////////////// START OUR CODE
 
+var purger = Purger();
 var handleNewData = function(fullData) {
   var data = fullData.connections;
   var timestamp = fullData.timestamp;
@@ -335,15 +337,27 @@ var handleNewData = function(fullData) {
     var source_ip = obj.src_host || obj.src;
     var dest_ip = obj.dst_host || obj.dst;
     var key = source_ip + " -> <br>" + dest_ip; // doing this since obj.key includes port numbers
+    purger.update(key);
     Object.keys(computerForField).forEach(function(k) {
-        computerForField[k].tmpMap[key] = computerForField[k].getValue(obj);
+      computerForField[k].tmpMap[key] = computerForField[k].getValue(obj);
     });
   });
 
   Object.keys(computerForField).forEach(function(k) {
     computerForField[k].series.addData(computerForField[k].tmpMap, timestamp);
   });
-    graph.series.addData(computerForField[current_graph].tmpMap, timestamp);
+  graph.series.addData(computerForField[current_graph].tmpMap, timestamp);
+  var SECONDS_UNTIL_PURGE = 60;
+  purger.purge(SECONDS_UNTIL_PURGE).forEach(function(key) {
+    purger.removeOneIf(graph.series, function(item) {
+      return item.name === key;
+    });
+    Object.keys(computerForField).forEach(function(k) {
+      purger.removeOneIf(computerForField[k].series, function(item) {
+        return item.name === key;
+      });
+    });
+  });
 }
 
 
