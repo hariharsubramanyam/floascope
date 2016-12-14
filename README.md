@@ -6,6 +6,9 @@ sudo apt-get install libpcap-dev
 
 Also, make sure you install [Node.js](https://nodejs.org/en/) (this should also install NPM).
 
+One you've completed the above steps, you can just run `install.sh`, which runs
+the steps below.
+
 You'll need the [Handlebars](http://handlebarsjs.com/) command line tool. You
 do that with:
 
